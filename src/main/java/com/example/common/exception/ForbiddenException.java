@@ -1,7 +1,15 @@
 package com.example.common.exception;
 
-public class ForbiddenException extends RuntimeException {
-  public ForbiddenException(String message) {
-    super(message);
-  }
+import org.springframework.http.HttpStatus;
+
+public class ForbiddenException extends BaseException {
+
+    public ForbiddenException() {
+        super(HttpStatus.FORBIDDEN);
+    }
+
+    public ForbiddenException(String message) {
+        super(HttpStatus.FORBIDDEN, message);
+    }
 }
+

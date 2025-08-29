@@ -1,7 +1,14 @@
 package com.example.common.exception;
 
-public class NotFoundException extends RuntimeException {
-  public NotFoundException(String message) {
-    super(message);
-  }
+import org.springframework.http.HttpStatus;
+
+public class NotFoundException extends BaseException {
+
+    public NotFoundException() {
+        super(HttpStatus.NOT_FOUND);
+    }
+
+    public NotFoundException(String message) {
+        super(HttpStatus.NOT_FOUND, message);
+    }
 }

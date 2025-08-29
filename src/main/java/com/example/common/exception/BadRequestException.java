@@ -1,7 +1,15 @@
 package com.example.common.exception;
 
-public class BadRequestException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class BadRequestException extends BaseException {
+
+  public BadRequestException() {
+    super(HttpStatus.BAD_REQUEST);
+  }
+
   public BadRequestException(String message) {
-    super(message);
+    super(HttpStatus.BAD_REQUEST, message);
   }
 }
+

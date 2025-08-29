@@ -1,7 +1,15 @@
 package com.example.common.exception;
 
-public class ConflictException extends RuntimeException {
-  public ConflictException(String message) {
-    super(message);
-  }
+import org.springframework.http.HttpStatus;
+
+public class ConflictException extends BaseException {
+
+    public ConflictException() {
+        super(HttpStatus.CONFLICT);
+    }
+
+    public ConflictException(String message) {
+        super(HttpStatus.CONFLICT, message);
+    }
 }
+
