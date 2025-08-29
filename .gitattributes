@@ -1,3 +1,18 @@
 /gradlew text eol=lf
 *.bat text eol=crlf
 *.jar binary
+# 모든 텍스트 파일은 자동으로 OS에 맞게 체크아웃
+* text=auto
+
+# 윈도우 배치 스크립트는 항상 CRLF로
+*.bat text eol=crlf
+
+# 유닉스/리눅스 스크립트는 LF로
+*.sh text eol=lf
+
+# Java, Kotlin, Gradle, YAML 등은 LF 권장
+*.java text eol=lf
+*.kt text eol=lf
+*.gradle text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
