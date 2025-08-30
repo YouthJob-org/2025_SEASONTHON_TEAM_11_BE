@@ -40,4 +40,26 @@ public class HrdApiClient {
                 .bodyToMono(String.class)
                 .block();
     }
+
+    // HrdApiClient.java
+    @Value("${hrd.api.detail-url:https://www.work24.go.kr/cm/openApi/call/hr/callOpenApiSvcInfo310L02.do}")
+    private String detailUrl;
+
+    public String getDetail(String trprId, String trprDegr, String torgId) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path(detailUrl.replace("https://www.work24.go.kr", "")) // host 분리
+                        .scheme("https")
+                        .host("www.work24.go.kr")
+                        .queryParam("authKey", authKey)
+                        .queryParam("returnType", "JSON")
+                        .queryParam("outType", "2") // 상세
+                        .queryParam("srchTrprId", trprId)
+                        .queryParam("srchTrprDegr", trprDegr)
+                        .queryParam("srchTorgId", torgId)
+                        .build())
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+    }
 }

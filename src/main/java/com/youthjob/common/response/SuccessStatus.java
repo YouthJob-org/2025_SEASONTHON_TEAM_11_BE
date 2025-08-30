@@ -22,6 +22,12 @@ public enum SuccessStatus {
     MEMBER_SIGNUP_SUCCESS(HttpStatus.OK,"회원가입 성공"),
     AUTH_SUCCESS(HttpStatus.OK, "인증에 성공했습니다."),
 
+    // === HRD/저장 과정 관련 ===
+    HRD_COURSE_SEARCH_SUCCESS(HttpStatus.OK, "훈련과정 조회 성공"),
+    HRD_SAVED_LIST_SUCCESS(HttpStatus.OK, "관심 훈련과정 목록 조회 성공"),
+    HRD_SAVED_ADD_SUCCESS(HttpStatus.OK, "관심 훈련과정 저장 성공"),
+    HRD_SAVED_DELETE_SUCCESS(HttpStatus.OK, "관심 훈련과정 삭제 성공"),
+    HRD_SAVED_TOGGLE_SUCCESS(HttpStatus.OK, "관심 훈련과정 토글 성공"),
 
     /**
      * 201 CREATED

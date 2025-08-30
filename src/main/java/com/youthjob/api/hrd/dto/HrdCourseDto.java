@@ -20,4 +20,5 @@ public class HrdCourseDto {
     private String yardMan;     // 정원
     private String titleLink;   // 상세 링크
     private String subTitleLink;
+    private String torgId;
 }
