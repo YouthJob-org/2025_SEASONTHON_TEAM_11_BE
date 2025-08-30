@@ -2,6 +2,8 @@ package com.youthjob.auth.controller;
 
 import com.youthjob.auth.dto.AuthDtos.*;
 import com.youthjob.auth.service.AuthService;
+import com.youthjob.common.response.ApiResponse;
+import com.youthjob.common.response.SuccessStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -16,29 +18,30 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signUp(@RequestBody @Valid SignUpRequest req) {
+    public ResponseEntity<ApiResponse<Void>> signUp(@RequestBody @Valid SignUpRequest req) {
         authService.signUp(req);
-        return ResponseEntity.ok().build();
+        return ApiResponse.successOnly(SuccessStatus.MEMBER_SIGNUP_SUCCESS);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody @Valid LoginRequest req) {
-        return ResponseEntity.ok(authService.login(req));
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@RequestBody @Valid LoginRequest req) {
+        return ApiResponse.success(SuccessStatus.LOGIN_SUCCESS, authService.login(req));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@RequestBody @Valid RefreshRequest req) {
-        return ResponseEntity.ok(authService.refresh(req));
+    public ResponseEntity<ApiResponse<AuthResponse>> refresh(@RequestBody @Valid RefreshRequest req) {
+        return ApiResponse.success(SuccessStatus.AUTH_SUCCESS, authService.refresh(req));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(
+    public ResponseEntity<ApiResponse<Void>> logout(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @RequestBody(required = false) RefreshRequest body // { "refreshToken": "..." }
+            @RequestBody(required = false) RefreshRequest body
     ) {
-        String access = (authHeader != null && authHeader.startsWith("Bearer ")) ? authHeader.substring(7) : null;
+        String access = (authHeader != null && authHeader.startsWith("Bearer "))
+                ? authHeader.substring(7) : null;
         String refresh = (body != null) ? body.refreshToken() : null;
         authService.logout(access, refresh);
-        return ResponseEntity.ok().build();
+        return ApiResponse.successOnly(SuccessStatus.LOGOUT_SUCCESS);
     }
 }

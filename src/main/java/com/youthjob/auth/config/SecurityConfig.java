@@ -1,6 +1,8 @@
 package com.youthjob.auth.config;
 
 import com.youthjob.auth.jwt.JwtAuthFilter;
+import com.youthjob.common.security.JwtAccessDeniedHandler;
+import com.youthjob.common.security.JwtAuthEntryPoint;
 import com.youthjob.auth.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +22,8 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final CustomUserDetailsService userDetailsService;
+    private final JwtAuthEntryPoint authEntryPoint;
+    private final JwtAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
@@ -40,14 +44,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-          .csrf(csrf -> csrf.disable())
-          .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-          .authorizeHttpRequests(auth -> auth
-              .requestMatchers("/api/v1/auth/**").permitAll()
-              .anyRequest().authenticated()
-          )
-          .authenticationProvider(authenticationProvider())
-          .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .authenticationProvider(authenticationProvider())
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authEntryPoint)   // 401 JSON
+                        .accessDeniedHandler(accessDeniedHandler)   // 403 JSON
+                )
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

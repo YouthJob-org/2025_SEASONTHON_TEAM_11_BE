@@ -2,10 +2,16 @@ package com.youthjob.auth.service;
 
 import com.youthjob.auth.domain.Role;
 import com.youthjob.auth.domain.User;
-import com.youthjob.auth.dto.AuthDtos.*;
+import com.youthjob.auth.dto.AuthDtos.AuthResponse;
+import com.youthjob.auth.dto.AuthDtos.LoginRequest;
+import com.youthjob.auth.dto.AuthDtos.RefreshRequest;
+import com.youthjob.auth.dto.AuthDtos.SignUpRequest;
 import com.youthjob.auth.jwt.JwtService;
 import com.youthjob.auth.jwt.TokenBlacklist;
 import com.youthjob.auth.repository.UserRepository;
+import com.youthjob.common.exception.BadRequestException;
+import com.youthjob.common.exception.UnauthorizedException;
+import com.youthjob.common.response.ErrorStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,11 +26,11 @@ public class AuthService {
     private final PasswordEncoder encoder;
     private final AuthenticationManager authManager;
     private final JwtService jwt;
-    private final TokenBlacklist blacklist; // 메모리/Redis 구현체로 대체 가능
+    private final TokenBlacklist blacklist;
 
     public void signUp(SignUpRequest req) {
         if (repo.existsByEmail(req.email())) {
-            throw new IllegalStateException("이미 가입된 이메일입니다.");
+            throw new BadRequestException(ErrorStatus.BAD_REQUEST_DUPLICATE_EMAIL.getMessage());
         }
         var encoded = encoder.encode(req.password());
         var user = User.createUser(req.email(), encoded, Role.USER);
@@ -32,15 +38,16 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest req) {
-        // 인증(비밀번호 일치 검증)
-        authManager.authenticate(new UsernamePasswordAuthenticationToken(req.email(), req.password()));
+        authManager.authenticate(
+                new UsernamePasswordAuthenticationToken(req.email(), req.password()));
 
-        var user = repo.findByEmail(req.email()).orElseThrow();
+        var user = repo.findByEmail(req.email()).orElseThrow(
+                () -> new UnauthorizedException(ErrorStatus.UNAUTHORIZED_USER.getMessage())
+        );
 
         String access = jwt.generateAccessToken(user);
         String refresh = jwt.generateRefreshToken(user.getEmail());
 
-        // 명시적 동작 메서드로 상태 변경
         user.issueRefreshToken(refresh);
         repo.save(user);
 
@@ -49,18 +56,22 @@ public class AuthService {
 
     public AuthResponse refresh(RefreshRequest req) {
         String token = req.refreshToken();
-        if (!jwt.isRefreshToken(token)) throw new IllegalArgumentException("리프레시 토큰이 아닙니다.");
-        String email = jwt.extractUsername(token);
-        var user = repo.findByEmail(email).orElseThrow();
-
-        // 서버 저장본과 일치 여부 확인(회전/탈취 방지)
-        if (user.getRefreshToken() == null || !user.getRefreshToken().equals(token)) {
-            throw new IllegalStateException("유효하지 않은 리프레시 토큰입니다.");
+        if (!jwt.isRefreshToken(token)) {
+            throw new UnauthorizedException(ErrorStatus.UNAUTHORIZED_INVALID_TOKEN.getMessage());
         }
 
-        // 회전
+        String email = jwt.extractUsername(token);
+        var user = repo.findByEmail(email).orElseThrow(
+                () -> new UnauthorizedException(ErrorStatus.UNAUTHORIZED_USER.getMessage())
+        );
+
+        if (user.getRefreshToken() == null || !user.getRefreshToken().equals(token)) {
+            throw new UnauthorizedException(ErrorStatus.UNAUTHORIZED_INVALID_TOKEN.getMessage());
+        }
+
         String newAccess = jwt.generateAccessToken(user);
         String newRefresh = jwt.generateRefreshToken(user.getEmail());
+
         user.issueRefreshToken(newRefresh);
         repo.save(user);
 
@@ -78,12 +89,12 @@ public class AuthService {
                 }
             });
         }
-        // 액세스 블랙리스트(선택)
+
         if (accessTokenFromHeader != null) {
             try {
                 var exp = jwt.getExpirationInstant(accessTokenFromHeader);
                 blacklist.add(accessTokenFromHeader, exp);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) { }
         }
     }
 }
