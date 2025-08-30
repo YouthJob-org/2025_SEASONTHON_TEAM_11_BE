@@ -1,4 +1,4 @@
-package com.youthjob.auth.jwt;
+package com.youthjob.api.auth.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;

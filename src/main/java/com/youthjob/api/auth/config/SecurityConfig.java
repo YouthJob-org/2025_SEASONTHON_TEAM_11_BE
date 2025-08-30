@@ -1,9 +1,9 @@
-package com.youthjob.auth.config;
+package com.youthjob.api.auth.config;
 
-import com.youthjob.auth.jwt.JwtAuthFilter;
+import com.youthjob.api.auth.jwt.JwtAuthFilter;
 import com.youthjob.common.security.JwtAccessDeniedHandler;
 import com.youthjob.common.security.JwtAuthEntryPoint;
-import com.youthjob.auth.service.CustomUserDetailsService;
+import com.youthjob.api.auth.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

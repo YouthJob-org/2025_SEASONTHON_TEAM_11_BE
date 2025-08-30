@@ -1,6 +1,6 @@
-package com.youthjob.auth.repository;
+package com.youthjob.api.auth.repository;
 
-import com.youthjob.auth.domain.User;
+import com.youthjob.api.auth.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

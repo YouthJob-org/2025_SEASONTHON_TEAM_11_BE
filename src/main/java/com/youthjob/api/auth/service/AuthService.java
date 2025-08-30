@@ -1,14 +1,14 @@
-package com.youthjob.auth.service;
+package com.youthjob.api.auth.service;
 
-import com.youthjob.auth.domain.Role;
-import com.youthjob.auth.domain.User;
-import com.youthjob.auth.dto.AuthDtos.AuthResponse;
-import com.youthjob.auth.dto.AuthDtos.LoginRequest;
-import com.youthjob.auth.dto.AuthDtos.RefreshRequest;
-import com.youthjob.auth.dto.AuthDtos.SignUpRequest;
-import com.youthjob.auth.jwt.JwtService;
-import com.youthjob.auth.jwt.TokenBlacklist;
-import com.youthjob.auth.repository.UserRepository;
+import com.youthjob.api.auth.domain.Role;
+import com.youthjob.api.auth.domain.User;
+import com.youthjob.api.auth.dto.AuthDtos.AuthResponse;
+import com.youthjob.api.auth.dto.AuthDtos.LoginRequest;
+import com.youthjob.api.auth.dto.AuthDtos.RefreshRequest;
+import com.youthjob.api.auth.dto.AuthDtos.SignUpRequest;
+import com.youthjob.api.auth.jwt.JwtService;
+import com.youthjob.api.auth.jwt.TokenBlacklist;
+import com.youthjob.api.auth.repository.UserRepository;
 import com.youthjob.common.exception.BadRequestException;
 import com.youthjob.common.exception.UnauthorizedException;
 import com.youthjob.common.response.ErrorStatus;

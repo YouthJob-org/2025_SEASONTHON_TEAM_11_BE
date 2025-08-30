@@ -1,6 +1,6 @@
-package com.youthjob.auth.service;
+package com.youthjob.api.auth.service;
 
-import com.youthjob.auth.repository.UserRepository;
+import com.youthjob.api.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;

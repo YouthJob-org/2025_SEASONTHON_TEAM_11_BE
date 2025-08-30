@@ -1,6 +1,6 @@
-package com.youthjob.auth.jwt;
+package com.youthjob.api.auth.jwt;
 
-import com.youthjob.auth.service.CustomUserDetailsService;
+import com.youthjob.api.auth.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,7 +1,7 @@
-package com.youthjob.auth.controller;
+package com.youthjob.api.auth.controller;
 
-import com.youthjob.auth.dto.AuthDtos.*;
-import com.youthjob.auth.service.AuthService;
+import com.youthjob.api.auth.dto.AuthDtos.*;
+import com.youthjob.api.auth.service.AuthService;
 import com.youthjob.common.response.ApiResponse;
 import com.youthjob.common.response.SuccessStatus;
 import jakarta.validation.Valid;

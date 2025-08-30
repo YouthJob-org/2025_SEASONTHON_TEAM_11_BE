@@ -1,4 +1,4 @@
-package com.youthjob.auth.controller;
+package com.youthjob.api.auth.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;

@@ -1,4 +1,4 @@
-package com.youthjob.auth.domain;
+package com.youthjob.api.auth.domain;
 
 import com.youthjob.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
