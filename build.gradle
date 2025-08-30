@@ -38,7 +38,6 @@ dependencies {
 	// DB Driver
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
-	// Lombok (중복 제거)
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 

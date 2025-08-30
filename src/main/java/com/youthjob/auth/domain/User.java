@@ -1,5 +1,6 @@
 package com.youthjob.auth.domain;
 
+import com.youthjob.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -16,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA 프록시/리플렉션용
 @Table(name = "users",
        indexes = @Index(name="uk_users_email", columnList="email", unique = true))
-public class User implements UserDetails {
+public class User extends BaseTimeEntity implements UserDetails {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
