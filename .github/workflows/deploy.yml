@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/deploy_practice  # 본인 Docker Hub 리포명
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/youthjob  # 본인 Docker Hub 리포명
   CONTAINER_NAME: spring-app
   PORT: "8080"
 
