@@ -1,4 +1,4 @@
-package com.example.common.response;
+package com.youthjob.common.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;

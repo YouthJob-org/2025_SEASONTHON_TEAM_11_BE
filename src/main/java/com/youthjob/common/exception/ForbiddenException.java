@@ -1,4 +1,4 @@
-package com.example.common.exception;
+package com.youthjob.common.exception;
 
 import org.springframework.http.HttpStatus;
 
