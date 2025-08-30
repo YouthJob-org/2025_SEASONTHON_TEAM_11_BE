@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/hrd")
+@RequestMapping("/api/v1/hrd")
 public class HrdController {
 
     private final HrdSearchService searchService;
