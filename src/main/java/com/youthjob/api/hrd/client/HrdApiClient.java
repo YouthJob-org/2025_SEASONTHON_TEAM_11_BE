@@ -8,7 +8,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class HrdApiClient {
 
     private final WebClient webClient;

@@ -2,7 +2,10 @@ package com.youthjob.api.hrd.dto;
 
 import lombok.*;
 
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class HrdCourseDto {
     private String title;
     private String subTitle;
