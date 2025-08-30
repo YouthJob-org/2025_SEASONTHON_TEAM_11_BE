@@ -26,16 +26,15 @@ public class User extends BaseTimeEntity implements UserDetails {
     private String email;
 
     @Column(nullable=false, length=200)
-    private String password; // BCrypt 해시만 저장
+    private String password;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable=false, length=20)
     private Role role;
 
     @Column(length=500)
-    private String refreshToken; // 리프레시 토큰(또는 jti/해시) 저장 위치
+    private String refreshToken;
 
-    // 외부에서 임의로 생성하지 못하게 private 생성자 + 팩토리 제공
     @Builder(access = AccessLevel.PRIVATE)
     private User(String email, String password, Role role) {
         this.email = email;
@@ -43,9 +42,7 @@ public class User extends BaseTimeEntity implements UserDetails {
         this.role = role;
     }
 
-    /** 팩토리: 생성 규칙(유효성 포함)을 한 곳에 모은다 */
     public static User createUser(String email, String encodedPassword, Role role) {
-        // 간단 유효성(필요 시 더 강화)
         if (email == null || email.isBlank()) throw new IllegalArgumentException("email required");
         if (encodedPassword == null || encodedPassword.isBlank()) throw new IllegalArgumentException("password required");
         if (role == null) role = Role.USER;
@@ -66,7 +63,7 @@ public class User extends BaseTimeEntity implements UserDetails {
         this.refreshToken = null;
     }
 
-    /** (옵션) 비밀번호 변경이 필요할 때만 열어둔다 */
+    /** 비밀번호 변경 */
     public void changePassword(String encodedPassword) {
         if (encodedPassword == null || encodedPassword.isBlank()) {
             throw new IllegalArgumentException("encodedPassword required");

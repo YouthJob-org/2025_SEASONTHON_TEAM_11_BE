@@ -32,7 +32,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 ? header.substring(7) : null;
 
         if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // 블랙리스트 검사(옵션)
+            // 블랙리스트 검사
             if (tokenBlacklist.isBlacklisted(token)) {
                 chain.doFilter(req, res);
                 return;

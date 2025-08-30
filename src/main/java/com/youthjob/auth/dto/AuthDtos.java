@@ -20,10 +20,10 @@ public class AuthDtos {
     public record AuthResponse(
             String accessToken,
             String refreshToken,
-            String tokenType // "Bearer"
+            String tokenType
     ) {}
 
     public record RefreshRequest(@NotBlank String refreshToken) {}
 
-    public record LogoutRequest(String accessToken) {} // 선택: 블랙리스트에 올릴 때 사용
+    public record LogoutRequest(String accessToken) {} // 블랙리스트
 }

@@ -6,7 +6,6 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/** 데모용 메모리 블랙리스트(실무는 Redis 권장) */
 @Component
 public class TokenBlacklist {
     private final Map<String, Instant> map = new ConcurrentHashMap<>();
