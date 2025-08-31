@@ -30,7 +30,6 @@ public class YouthPolicyApiResponseDto {
     @Getter
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Policy {
-        // ↓ JSON 키와 동일한 필드명이라 어노테이션 불필요
         private String plcyNo;
         private String bscPlanCycl;
         private String bscPlanPlcyWayNo;
