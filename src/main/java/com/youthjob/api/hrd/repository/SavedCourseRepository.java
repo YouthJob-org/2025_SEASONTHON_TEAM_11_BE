@@ -10,9 +10,9 @@ import java.util.Optional;
 
 public interface SavedCourseRepository extends JpaRepository<SavedCourse, Long> {
 
-    List<SavedCourse> findAllByUserOrderByCreatedAtDesc(User user);
-
     boolean existsByUserAndTrprIdAndTrprDegr(User user, String trprId, String trprDegr);
+
+    List<SavedCourse> findAllByUserOrderByCreatedAtDesc(User user);
 
     Optional<SavedCourse> findByIdAndUser(Long id, User user);
 }
