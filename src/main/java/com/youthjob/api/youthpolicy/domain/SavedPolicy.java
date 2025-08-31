@@ -32,7 +32,7 @@ public class SavedPolicy extends BaseTimeEntity {
     @Column(name = "plcy_no", nullable = false, length = 30)
     private String plcyNo;
 
-    // ===== 스냅샷(화면 편의용) =====
+    // ===== 스냅샷 =====
     @Column(length = 300) private String plcyNm;        // 정책명
     @Column(length = 200) private String plcyKywdNm;    // 키워드
     @Column(length = 50)  private String lclsfNm;       // 대분류
