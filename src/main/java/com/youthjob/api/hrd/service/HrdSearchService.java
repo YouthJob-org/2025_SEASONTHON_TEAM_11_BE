@@ -151,6 +151,9 @@ public class HrdSearchService {
                     .trprChap(    val(base,  "trprChap","TRPR_CHAP"))
                     .trprChapTel( val(base,  "trprChapTel","TRPR_CHAP_TEL"))
                     .trprChapEmail(val(base,  "trprChapEmail","TRPR_CHAP_EMAIL"))
+                    .filePath(    val(base,  "filePath","FILE_PATH"))
+                    .pFileName(   val(base,  "pFileName","P_FILE_NAME"))
+                    .torgParGrad(val(base,"torgParGrad","TORG_PAR_GRAD"))
                     .build();
 
         } catch (Exception e) {
