@@ -4,82 +4,67 @@ import com.youthjob.api.auth.domain.User;
 import com.youthjob.common.entity.BaseTimeEntity;
 import com.youthjob.common.exception.BaseException;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.Instant;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@AllArgsConstructor @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 @Table(
         name = "saved_course",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_saved_course_user_trpr_degr",
-                        columnNames = {"user_id", "trpr_id", "trpr_degr"})
-        },
         indexes = {
                 @Index(name = "idx_saved_course_user", columnList = "user_id"),
-                @Index(name = "idx_saved_course_trpr", columnList = "trpr_id,trpr_degr")
+                @Index(name = "idx_saved_course_trpr", columnList = "trprId,trprDegr")
+        },
+        uniqueConstraints = {
+                // 유저별 같은 과정/회차 중복 방지
+                @UniqueConstraint(name = "uk_saved_course_user_trpr", columnNames = {"user_id","trprId","trprDegr"})
         }
 )
-public class SavedCourse extends BaseTimeEntity {
+public class SavedCourse extends BaseTimeEntity{
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 저장한 사용자 */
+    // 로그인 사용자
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_saved_course_user"))
+    @JoinColumn(name = "user_id", foreignKey = @ForeignKey(name = "fk_saved_course_user"))
     private User user;
 
-    /** HRD 식별자 */
-    @Column(name = "trpr_id", nullable = false, length = 50)
+    // 과정 식별
+    @Column(nullable = false, length = 50)
     private String trprId;
 
-    @Column(name = "trpr_degr", nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     private String trprDegr;
 
-    // 스냅샷(변동 가능성 있어도 조회 편의 위해 일부 저장)
-    @Column(length = 300) private String title;
-    @Column(length = 300) private String subTitle;
-    @Column(length = 200) private String address;
-    @Column(length = 50)  private String telNo;
-    @Column(length = 10)  private String traStartDate;
-    @Column(length = 10)  private String traEndDate;
-    @Column(length = 60)  private String trainTarget;
-    @Column(length = 20)  private String trainTargetCd;
-    @Column(length = 20)  private String ncsCd;
-    @Column(length = 20)  private String courseMan;
-    @Column(length = 20)  private String realMan;
-    @Column(length = 20)  private String yardMan;
-    @Column(length = 500) private String titleLink;
-    @Column(length = 500) private String subTitleLink;
+    // 화면 표시용 메타
+    private String title;
+    private String subTitle;
+    private String address;
+    private String telNo;
 
-    @Builder
-    private SavedCourse(User user, String trprId, String trprDegr,
-                        String title, String subTitle, String address, String telNo,
-                        String traStartDate, String traEndDate, String trainTarget, String trainTargetCd,
-                        String ncsCd, String courseMan, String realMan, String yardMan,
-                        String titleLink, String subTitleLink) {
-        this.user = user;
-        this.trprId = trprId;
-        this.trprDegr = trprDegr;
-        this.title = title;
-        this.subTitle = subTitle;
-        this.address = address;
-        this.telNo = telNo;
-        this.traStartDate = traStartDate;
-        this.traEndDate = traEndDate;
-        this.trainTarget = trainTarget;
-        this.trainTargetCd = trainTargetCd;
-        this.ncsCd = ncsCd;
-        this.courseMan = courseMan;
-        this.realMan = realMan;
-        this.yardMan = yardMan;
-        this.titleLink = titleLink;
-        this.subTitleLink = subTitleLink;
-    }
+    private String traStartDate;
+    private String traEndDate;
+
+    private String trainTarget;
+    private String trainTargetCd;
+
+    private String ncsCd;
+
+    private String courseMan;
+    private String realMan;
+    private String yardMan;
+
+    @Column(length = 1000)
+    private String titleLink;
+
+    @Column(length = 1000)
+    private String subTitleLink;
+
 }

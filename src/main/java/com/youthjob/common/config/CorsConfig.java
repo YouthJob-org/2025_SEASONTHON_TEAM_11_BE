@@ -16,7 +16,9 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOrigins(List.of(
-                "http://localhost:3000"            // 프론트엔드 개발 환경
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "https://youthjob.site"
         ));
         config.setAllowedMethods(List.of(           // 허용 메서드
                 "GET",

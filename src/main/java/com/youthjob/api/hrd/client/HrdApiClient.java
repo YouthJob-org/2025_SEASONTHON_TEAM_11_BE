@@ -11,16 +11,16 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class HrdApiClient {
 
     private final WebClient webClient;
-
-    @Value("${hrd.api.base-url}")
-    private String baseUrl;
-    @Value("${hrd.api.auth-key}")
+    @Value("${api.hrd.key}")
     private String authKey;
 
+
+    @Value("${api.hrd.search-url}")
+    private String searchUrl;
     public String search(String startDt, String endDt, int page, int size, String area1, String ncs1, String sort, String sortCol) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
-                        .path(baseUrl.replace("https://www.work24.go.kr", "")) // WebClient 기본 도메인 미사용 시 그대로 path로
+                        .path(searchUrl.replace("https://www.work24.go.kr", "")) // WebClient 기본 도메인 미사용 시 그대로 path로
                         .scheme("https")
                         .host("www.work24.go.kr")
                         .queryParam("authKey", authKey)
@@ -40,10 +40,8 @@ public class HrdApiClient {
                 .block();
     }
 
-    // HrdApiClient.java
-    @Value("${hrd.api.detail-url:https://www.work24.go.kr/cm/openApi/call/hr/callOpenApiSvcInfo310L02.do}")
+    @Value("${api.hrd.detail-url}")
     private String detailUrl;
-
     public String getDetail(String trprId, String trprDegr, String torgId) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
@@ -57,6 +55,33 @@ public class HrdApiClient {
                         .queryParam("srchTrprDegr", trprDegr)
                         .queryParam("srchTorgId", torgId)
                         .build())
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+    }
+
+    @Value("${api.hrd.stats-url}")
+    private String statsUrl;
+    public String getStatsXml(String trprId, String torgId, String trprDegrOrNull) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path(statsUrl.replace("https://www.work24.go.kr",""))
+                        .scheme("https")
+                        .host("www.work24.go.kr")
+                        .queryParam("authKey", authKey)
+                        .queryParam("returnType", "XML")
+                        .queryParam("outType", "2")
+                        .queryParam("srchTrprId", trprId)
+                        .queryParam("srchTorgId", torgId)
+                        .queryParamIfPresent("srchTrprDegr",
+                                (trprDegrOrNull == null || trprDegrOrNull.isBlank())
+                                        ? java.util.Optional.empty()
+                                        : java.util.Optional.of(trprDegrOrNull))
+                        .build())
+                .accept(org.springframework.http.MediaType.APPLICATION_XML)
+                .header("Accept-Encoding", "identity")
+                .header("User-Agent","Mozilla/5.0")
+                .header("Referer","https://www.work24.go.kr/")
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
