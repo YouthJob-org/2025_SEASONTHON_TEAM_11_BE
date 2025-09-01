@@ -13,5 +13,9 @@ public record HrdCourseDetailDto(
 
         // 기관 연락/주소
         String inoNm, String addr1, String addr2, String zipCd,
-        String hpAddr, String trprChap, String trprChapTel, String trprChapEmail
+        String hpAddr, String trprChap, String trprChapTel, String trprChapEmail,
+
+        String filePath,
+        String pFileName,
+        String torgParGrad
 ) {}
