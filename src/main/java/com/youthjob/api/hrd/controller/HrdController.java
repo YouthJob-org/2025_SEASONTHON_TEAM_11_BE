@@ -1,9 +1,6 @@
 package com.youthjob.api.hrd.controller;
 
-import com.youthjob.api.hrd.dto.HrdCourseDetailDto;
-import com.youthjob.api.hrd.dto.HrdCourseDto;
-import com.youthjob.api.hrd.dto.SaveCourseRequest;
-import com.youthjob.api.hrd.dto.SavedCourseDto;
+import com.youthjob.api.hrd.dto.*;
 import com.youthjob.api.hrd.service.HrdSearchService;
 import com.youthjob.common.response.ApiResponse;
 import com.youthjob.common.response.SuccessStatus;
@@ -35,7 +32,36 @@ public class HrdController {
         return ResponseEntity.ok(searchService.search(startDt, endDt, page, size, area1, ncs1, sort, sortCol));
     }
 
-    // ====== 저장(관심) 기능 ======
+
+
+    @GetMapping("/courses/{trprId}/{trprDegr}")
+    public ResponseEntity<HrdCourseDetailDto> detail(
+            @PathVariable String trprId,
+            @PathVariable String trprDegr,
+            @RequestParam String torgId
+    ) {
+        return ResponseEntity.ok(searchService.getDetail(trprId, trprDegr, torgId));
+    }
+
+    @GetMapping("/courses/{trprId}/stats")
+    public ResponseEntity<List<HrdCourseStatDto>> stats(
+            @PathVariable String trprId,
+            @RequestParam String torgId,
+            @RequestParam(required = false) String trprDegr // 선택(없으면 모든 회차)
+    ) {
+        return ResponseEntity.ok(searchService.getStats(trprId, torgId, trprDegr));
+    }
+
+    //교육 상세정보, 교육기관 정보 조회
+    @GetMapping("/courses/{trprId}/{trprDegr}/full")
+    public ResponseEntity<HrdCourseFullDto> full(
+            @PathVariable String trprId,
+            @PathVariable String trprDegr,
+            @RequestParam String torgId
+    ) {
+        return ResponseEntity.ok(searchService.getCourseFull(trprId, trprDegr, torgId));
+    }
+
     @GetMapping("/saved")
     public ResponseEntity<ApiResponse<List<SavedCourseDto>>> listSaved() {
         return ApiResponse.success(SuccessStatus.HRD_SAVED_LIST_SUCCESS, searchService.listSaved());
@@ -55,14 +81,5 @@ public class HrdController {
     @PostMapping("/saved/toggle")
     public ResponseEntity<ApiResponse<SavedCourseDto>> toggle(@RequestBody @Valid SaveCourseRequest req) {
         return ApiResponse.success(SuccessStatus.HRD_SAVED_TOGGLE_SUCCESS, searchService.toggleSaved(req));
-    }
-
-    @GetMapping("/courses/{trprId}/{trprDegr}")
-    public ResponseEntity<HrdCourseDetailDto> detail(
-            @PathVariable String trprId,
-            @PathVariable String trprDegr,
-            @RequestParam String torgId
-    ) {
-        return ResponseEntity.ok(searchService.getDetail(trprId, trprDegr, torgId));
     }
 }
