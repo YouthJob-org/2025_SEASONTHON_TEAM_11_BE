@@ -1,26 +1,28 @@
 package com.youthjob.api.youthpolicy.controller;
 
-import com.youthjob.api.youthpolicy.client.YouthPolicyClient;
 import com.youthjob.api.youthpolicy.dto.YouthPolicyApiRequestDto;
 import com.youthjob.api.youthpolicy.dto.YouthPolicyApiResponseDto;
 import com.youthjob.api.youthpolicy.dto.YouthPolicyDetailDto;
+import com.youthjob.api.youthpolicy.service.YouthPolicyService;
+import com.youthjob.api.youthpolicy.client.YouthPolicyClient;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+        import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/youth-policies")
 public class YouthPolicyController {
 
+    private final YouthPolicyService service;
     private final YouthPolicyClient client;
 
-    /** api 검색, 호출 예: /api/v1/youth-policies?plcyKywdNm=보조금&pageNum=1&pageSize=10 */
+    /** 검색 + 후처리 필터 호출 예: /api/v1/youth-policies?plcyKywdNm=보조금&pageNum=1&pageSize=10 */
     @GetMapping
     public YouthPolicyApiResponseDto list(@Valid @ModelAttribute YouthPolicyApiRequestDto req) {
-        return client.search(req);
+        return service.searchWithFilter(req);
     }
 
     /** 각 정책별 상세정보: /api/v1/youth-policies/{plcyNo} */
@@ -35,7 +37,6 @@ public class YouthPolicyController {
 
         var p = resp.getResult().getYouthPolicyList().get(0);
 
-        // 뷰 DTO로 요약 반환 (프론트 필요한 정보 보고 수정할 예정)
         return YouthPolicyDetailDto.builder()
                 .plcyNo(p.getPlcyNo())
                 .plcyNm(p.getPlcyNm())

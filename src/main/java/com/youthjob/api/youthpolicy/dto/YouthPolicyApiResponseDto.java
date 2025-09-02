@@ -1,12 +1,15 @@
 package com.youthjob.api.youthpolicy.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Getter;
+import lombok.*;
 
 import java.util.List;
 
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
 public class YouthPolicyApiResponseDto {
     private int resultCode;
     private String resultMessage;
@@ -14,6 +17,9 @@ public class YouthPolicyApiResponseDto {
 
     @Getter
     @JsonIgnoreProperties(ignoreUnknown = true)
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder(toBuilder = true)
     public static class Result {
         private Pagging pagging;
         private List<Policy> youthPolicyList;
@@ -21,6 +27,9 @@ public class YouthPolicyApiResponseDto {
 
     @Getter
     @JsonIgnoreProperties(ignoreUnknown = true)
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder(toBuilder = true)
     public static class Pagging {
         private Integer totCount;
         private Integer pageNum;
@@ -29,6 +38,9 @@ public class YouthPolicyApiResponseDto {
 
     @Getter
     @JsonIgnoreProperties(ignoreUnknown = true)
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder(toBuilder = true)
     public static class Policy {
         private String plcyNo;
         private String bscPlanCycl;
