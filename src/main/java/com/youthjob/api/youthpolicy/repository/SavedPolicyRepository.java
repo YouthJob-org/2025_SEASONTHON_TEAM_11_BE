@@ -15,7 +15,7 @@ public interface SavedPolicyRepository extends JpaRepository<SavedPolicy, Long> 
     Optional<SavedPolicy> findByIdAndUser(Long id, User user);
     Optional<SavedPolicy> findByUserAndPlcyNo(User user, String plcyNo);
 
-    // 추가
+    // === 추가: 마이페이지용 ===
     Page<SavedPolicy> findByUser(User user, Pageable pageable);
     long countByUser(User user);
 }
