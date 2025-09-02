@@ -222,8 +222,6 @@ public class HrdSearchService {
                 .build();
     }
 
-
-
     private static String extractQuery(String url, String key) {
         try {
             var uri = new java.net.URI(url);
@@ -256,7 +254,6 @@ public class HrdSearchService {
         return null;
     }
 
-
     // 여러 후보 키 중 첫 번째로 존재하는 노드 반환
     private static JsonNode node(JsonNode parent, String... keys) {
         if (parent == null) return missing();
@@ -266,6 +263,7 @@ public class HrdSearchService {
         }
         return missing();
     }
+
     private static JsonNode missing() {
         return com.fasterxml.jackson.databind.node.MissingNode.getInstance();
     }
