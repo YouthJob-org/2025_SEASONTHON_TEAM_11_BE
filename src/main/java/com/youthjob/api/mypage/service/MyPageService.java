@@ -2,6 +2,8 @@ package com.youthjob.api.mypage.service;
 
 import com.youthjob.api.auth.domain.User;
 import com.youthjob.api.auth.repository.UserRepository;
+import com.youthjob.api.empprogram.dto.SavedEmpProgramDto;
+import com.youthjob.api.empprogram.repository.SavedEmpProgramRepository;
 import com.youthjob.api.hrd.dto.SavedCourseDto;
 import com.youthjob.api.hrd.repository.SavedCourseRepository;
 import com.youthjob.api.mypage.dto.*;
@@ -18,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MyPageService {
 
     private final UserRepository userRepository;
-    // private final SavedCapabilityRepository savedCapabilityRepository;
+    private final SavedEmpProgramRepository empProgramRepository;
     private final SavedCourseRepository savedCourseRepository;
     private final SavedPolicyRepository savedPolicyRepository;
 
@@ -26,26 +28,26 @@ public class MyPageService {
     public MyPageSummaryDto summary() {
         User me = currentUser();
 
-        // long capCnt  = savedCapabilityRepository.countByUser(me);
-        long hrdCnt  = savedCourseRepository.countByUser(me);
-        long polCnt  = savedPolicyRepository.countByUser(me);
+        long empCnt = empProgramRepository.countByMemberId(me.getId());
+        long hrdCnt = savedCourseRepository.countByUser(me);
+        long polCnt = savedPolicyRepository.countByUser(me);
 
         return MyPageSummaryDto.builder()
                 .profile(toProfileDto(me))
                 .counters(CountersDto.builder()
-                        // .savedCapabilities(capCnt)
+                        .savedEmpPrograms(empCnt)
                         .savedCourses(hrdCnt)
                         .savedPolicies(polCnt)
                         .build())
                 .build();
     }
 
-    /** 내 정보 단독 조회 (수정 화면 초기값) */
+    /** 내 정보 단독 조회(수정 화면 초기값) */
     public ProfileDto profile() {
         return toProfileDto(currentUser());
     }
 
-    /** 내 정보 수정: 이름만 부분 업데이트 */
+    /** 내 정보 수정 (이름만) */
     @Transactional
     public ProfileDto updateProfile(UpdateMyInfoRequest req) {
         User me = currentUser();
@@ -53,27 +55,27 @@ public class MyPageService {
         return toProfileDto(me); // dirty checking
     }
 
-//    /** 취업역량 강화 프로그램 (관심) 페이징 */
-//    public PageResult<SavedCapabilityDto> savedCapabilities(int page, int size) {
-//        User me = currentUser();
-//        Pageable pageable = PageRequest.of(Math.max(page,0), Math.min(Math.max(size,1),100),
-//                Sort.by(Sort.Direction.DESC, "createdAt"));
-//        var p = savedCapabilityRepository.findByUser(me, pageable)
-//                .map(SavedCapabilityDto::from);
-//        return PageResult.<SavedCapabilityDto>builder()
-//                .page(p.getNumber()).size(p.getSize())
-//                .totalElements(p.getTotalElements()).totalPages(p.getTotalPages())
-//                .items(p.getContent())
-//                .build();
-//    }
+    /** 취업역량 강화프로그램(관심) 페이징 */
+    public PageResult<SavedEmpProgramDto> savedEmpPrograms(int page, int size) {
+        User me = currentUser();
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100),
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+        var p = empProgramRepository.findByMemberId(me.getId(), pageable)
+                .map(SavedEmpProgramDto::from);
+
+        return PageResult.<SavedEmpProgramDto>builder()
+                .page(p.getNumber()).size(p.getSize())
+                .totalElements(p.getTotalElements()).totalPages(p.getTotalPages())
+                .items(p.getContent())
+                .build();
+    }
 
     /** 내일배움카드(관심) 페이징 */
     public PageResult<SavedCourseDto> savedCourses(int page, int size) {
         User me = currentUser();
-        Pageable pageable = PageRequest.of(Math.max(page,0), Math.min(Math.max(size,1),100),
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100),
                 Sort.by(Sort.Direction.DESC, "createdAt"));
-        var p = savedCourseRepository.findByUser(me, pageable)
-                .map(SavedCourseDto::from);
+        var p = savedCourseRepository.findByUser(me, pageable).map(SavedCourseDto::from);
         return PageResult.<SavedCourseDto>builder()
                 .page(p.getNumber()).size(p.getSize())
                 .totalElements(p.getTotalElements()).totalPages(p.getTotalPages())
@@ -84,10 +86,9 @@ public class MyPageService {
     /** 청년정책(관심) 페이징 */
     public PageResult<SavedPolicyDto> savedPolicies(int page, int size) {
         User me = currentUser();
-        Pageable pageable = PageRequest.of(Math.max(page,0), Math.min(Math.max(size,1),100),
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100),
                 Sort.by(Sort.Direction.DESC, "createdAt"));
-        var p = savedPolicyRepository.findByUser(me, pageable)
-                .map(SavedPolicyDto::from);
+        var p = savedPolicyRepository.findByUser(me, pageable).map(SavedPolicyDto::from);
         return PageResult.<SavedPolicyDto>builder()
                 .page(p.getNumber()).size(p.getSize())
                 .totalElements(p.getTotalElements()).totalPages(p.getTotalPages())
@@ -109,7 +110,6 @@ public class MyPageService {
         String displayName = (me.getName() != null && !me.getName().isBlank())
                 ? me.getName()
                 : deriveLocalPart(me.getEmail());
-
         return ProfileDto.builder()
                 .displayName(displayName)
                 .email(me.getEmail())
