@@ -16,7 +16,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA 프록시/리플렉션용
 @Table(name = "users",
-       indexes = @Index(name="uk_users_email", columnList="email", unique = true))
+        indexes = @Index(name="uk_users_email", columnList="email", unique = true))
 public class User extends BaseTimeEntity implements UserDetails {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,6 +34,10 @@ public class User extends BaseTimeEntity implements UserDetails {
 
     @Column(length=500)
     private String refreshToken;
+
+    // ===== 마이페이지에서 수정할 이름 -> 선택사항 =====
+    @Column(length = 30)
+    private String name;
 
     @Builder(access = AccessLevel.PRIVATE)
     private User(String email, String password, Role role) {
@@ -69,6 +73,11 @@ public class User extends BaseTimeEntity implements UserDetails {
             throw new IllegalArgumentException("encodedPassword required");
         }
         this.password = encodedPassword;
+    }
+
+    /** 마이페이지: 이름만 부분 업데이트(null은 미변경) */
+    public void updateName(String name) {
+        if (name != null) this.name = name;
     }
 
     // === UserDetails ===
