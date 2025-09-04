@@ -52,6 +52,21 @@ dependencies {
 	//XML 파싱
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
 
+	//OPENAI
+	implementation('com.theokanning.openai-gpt3-java:service:0.18.2') {
+		// (선택) 오래된 OkHttp/Okio 제외하고 최신으로 덮어쓰기 원하면 아래 exclude 유지
+		exclude group: "com.squareup.okhttp3", module: "okhttp"
+		exclude group: "com.squareup.okio",    module: "okio"
+	}
+
+	// (선택) 보안 경고 없애려면 최신으로 덮어쓰기
+	implementation platform("com.squareup.okhttp3:okhttp-bom:4.12.0")
+	implementation "com.squareup.okhttp3:okhttp"
+	implementation "com.squareup.okhttp3:logging-interceptor"
+	implementation "com.squareup.okio:okio:3.9.0"
+
+	// JSON 파싱용
+	implementation("com.fasterxml.jackson.core:jackson-databind")
 	// 카페인 캐시 사용 -> api 최적화
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
