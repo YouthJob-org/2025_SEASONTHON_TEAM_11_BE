@@ -67,6 +67,10 @@ dependencies {
 
 	// JSON 파싱용
 	implementation("com.fasterxml.jackson.core:jackson-databind")
+
+	// 카페인 캐시 사용 -> api 최적화
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
 }
 
 tasks.named('test') {
