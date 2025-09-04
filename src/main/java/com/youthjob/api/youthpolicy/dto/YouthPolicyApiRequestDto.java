@@ -11,7 +11,7 @@ public class YouthPolicyApiRequestDto {
     // 기본값
     private String rtnType = "json";
     @Min(1) private Integer pageNum = 1;
-    @Min(1) private Integer pageSize = 10;
+    @Min(1) private Integer pageSize = 500;
     /** 화면유형: "1"(목록) / "2"(상세) - 스펙은 String */
     private String pageType = "1";
 
