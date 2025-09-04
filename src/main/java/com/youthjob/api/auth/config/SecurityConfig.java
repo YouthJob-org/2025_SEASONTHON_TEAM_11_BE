@@ -54,7 +54,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/v1/auth/**",
-                                "/api/health"
+                                "/api/health",
+                                "/api/chat/**"
                                 ).permitAll()
                         .anyRequest().authenticated()
                 )
