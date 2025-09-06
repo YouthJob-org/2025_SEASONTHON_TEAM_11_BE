@@ -20,7 +20,7 @@ public class YouthPolicyController {
     private final YouthPolicyService service;
     private final YouthPolicyClient client;
 
-    /** 검색 + 후처리 필터: /api/v1/youth-policies?plcyKywdNm=보조금&pageNum=1&pageSize=10 */
+    /** 검색 + 후처리 필터 -> 예시 : /api/v1/youth-policies?plcyKywdNm=보조금&pageNum=1&pageSize=10 */
     @GetMapping
     public YouthPolicyApiResponseDto list(@Valid @ModelAttribute YouthPolicyApiRequestDto req) {
         return service.searchWithFilter(req);

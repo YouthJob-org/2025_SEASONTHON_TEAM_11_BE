@@ -147,6 +147,7 @@ public class YouthPolicyService {
         return Stream.of(src.split("[,，]")).map(String::trim).anyMatch(t -> t.contains(kw));
     }
 
+    @SuppressWarnings("unchecked")
     private static Map<String,Object> castMap(Object o){
         return (o instanceof Map) ? (Map<String, Object>) o : new HashMap<>();
     }
