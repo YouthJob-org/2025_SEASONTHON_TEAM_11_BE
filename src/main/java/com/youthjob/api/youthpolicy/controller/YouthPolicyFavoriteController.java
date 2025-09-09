@@ -17,13 +17,13 @@ public class YouthPolicyFavoriteController {
 
     private final YouthPolicyFavoriteService service;
 
-    /** 내 관심 정책 목록 */
+    /** 내 관심 정책 목록 (DB 스냅샷 기준) */
     @GetMapping("/saved")
     public ResponseEntity<List<SavedPolicyDto>> listSaved() {
         return ResponseEntity.ok(service.listSaved());
     }
 
-    /** 관심 저장 (스냅샷 없으면 서버가 외부 API로 채움) */
+    /** 관심 저장: DB의 youth_policy에서 plcyNo로 조회 후 스냅샷 저장 */
     @PostMapping("/saved")
     public ResponseEntity<SavedPolicyDto> save(@RequestBody @Valid SavePolicyRequest req) {
         return ResponseEntity.ok(service.save(req));
