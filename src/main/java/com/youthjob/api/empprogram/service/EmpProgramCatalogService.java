@@ -146,16 +146,15 @@ public class EmpProgramCatalogService {
         return repo.deleteAllEndedBefore(todayYyyymmdd);
     }
 
-    /** 이미 시작된 교육은 삭제처리(매일 자정) */
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
+    // 매주 토요일 0시(자정)에 실행
+    @Scheduled(cron = "0 0 0 * * SAT", zone = "Asia/Seoul")
     @Transactional
-    public void nightlyRefresh() {
+    public void weeklyRefresh() {
         String today = todayYyyymmdd();
         purgePast(today);
         harvestRollingSixMonths(today);
     }
 
-    /* ───────── 내부 헬퍼들 ───────── */
 
     /** 기존 호출부 호환용(3파라미터) */
     private EmpProgramResponseDto fetch(String yyyymmdd, int startPage, int display) {
