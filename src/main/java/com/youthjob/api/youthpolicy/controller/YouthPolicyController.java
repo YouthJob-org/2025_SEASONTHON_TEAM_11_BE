@@ -23,7 +23,7 @@ public class YouthPolicyController {
         return ResponseEntity.ok("성공!, 총 " + count + "개의 청년정책 API 연동이 완료되었습니다.");
     }
 
-    /** 검색: DB 기반 (기존 외부 API 호출 아님) */
+    /** 검색: DB 기반 */
     @GetMapping
     public YouthPolicyApiResponseDto list(@Valid @ModelAttribute YouthPolicyApiRequestDto req) {
         return service.searchFromDb(req);
