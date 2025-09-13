@@ -9,6 +9,7 @@ import com.youthjob.api.youthpolicy.dto.YouthPolicyApiResponseDto;
 import com.youthjob.api.youthpolicy.dto.YouthPolicyApiResponseDto.Policy;
 import com.youthjob.api.youthpolicy.dto.YouthPolicyDetailDto;
 import com.youthjob.api.youthpolicy.repository.YouthPolicyRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
@@ -17,7 +18,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.criteria.Predicate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -36,18 +36,23 @@ public class YouthPolicyService {
     public long ingestAll(boolean full) {
         final int fetchChunk = 500;
         int fetchedTotal = 0;
+        long t0 = System.currentTimeMillis();
 
         YouthPolicyApiRequestDto req0 = new YouthPolicyApiRequestDto();
         req0.setPageNum(1);
         req0.setPageSize(fetchChunk);
+
         YouthPolicyApiResponseDto first = client.search(req0);
-        if (first == null || first.getResult() == null) return 0;
+        if (first == null || first.getResult() == null) {
+            log.warn("[Ingest] first page is null");
+            return 0;
+        }
 
         List<Policy> firstItems = nullSafe(first.getResult().getYouthPolicyList());
         upsertPolicies(firstItems, full);
         fetchedTotal += firstItems.size();
 
-        Integer totCount = first.getResult().getPagging() != null
+        Integer totCount = (first.getResult().getPagging() != null)
                 ? first.getResult().getPagging().getTotCount()
                 : null;
 
@@ -97,52 +102,58 @@ public class YouthPolicyService {
                 if (items.isEmpty()) break;
                 upsertPolicies(items, full);
                 fetchedTotal += items.size();
-                if (++safety > 10000) break;
+                if (++safety > 10000) break; // 안전 차단
                 p++;
             }
         }
 
-        log.info("[Ingest] Done. fetchedTotal={}", fetchedTotal);
+        log.info("[Ingest] Done fetchedTotal={} elapsedMs={}", fetchedTotal, System.currentTimeMillis() - t0);
         return fetchedTotal;
     }
 
-    /** Upsert: plcyNo 기준 중복 제거 후 있으면 apply(p), 없으면 of(p) */
+    /**
+     * 효율적인 업서트:
+     *  - 배치 내 plcyNo 중복 제거
+     *  - 기존 엔티티 일괄 조회 → 존재하면 apply(p) (dirty checking으로 UPDATE), 없으면 신규 of(p)만 saveAll
+     */
     @Transactional
     protected void upsertPolicies(List<Policy> items, boolean full) {
         if (items == null || items.isEmpty()) return;
 
-        // 1) 같은 배치 내 plcyNo 중복 제거 (마지막 값으로 덮어쓰기)
+        // 1) plcyNo 기준 dedup
         Map<String, Policy> dedup = new LinkedHashMap<>();
         for (Policy p : items) {
-            if (p.getPlcyNo() != null && !p.getPlcyNo().isBlank()) {
-                dedup.put(p.getPlcyNo(), p);
+            String no = (p != null) ? p.getPlcyNo() : null;
+            if (no != null && !no.isBlank()) {
+                dedup.put(no, p);
             }
         }
         if (dedup.isEmpty()) return;
 
-        // 2) 기존 엔티티 일괄 조회 → 맵
-        List<YouthPolicy> existing = repo.findAllByPlcyNoIn(dedup.keySet());
-        Map<String, YouthPolicy> map = new HashMap<>(existing.size());
-        for (YouthPolicy e : existing) map.put(e.getPlcyNo(), e);
+        // 2) 존재 여부 벌크 조회
+        List<YouthPolicy> existed = repo.findAllByPlcyNoIn(dedup.keySet());
+        Map<String, YouthPolicy> existedMap = new HashMap<>(existed.size() * 2);
+        for (YouthPolicy e : existed) existedMap.put(e.getPlcyNo(), e);
 
-        // 3) upsert
-        List<YouthPolicy> toSave = new ArrayList<>(dedup.size());
+        // 3) 신규만 수집, 기존은 apply로 갱신
+        List<YouthPolicy> toInsert = new ArrayList<>();
         for (Map.Entry<String, Policy> e : dedup.entrySet()) {
             String no = e.getKey();
             Policy p = e.getValue();
-            YouthPolicy cur = map.get(no);
+            YouthPolicy cur = existedMap.get(no);
             if (cur != null) {
-                cur.apply(p);
-                toSave.add(cur);
+                cur.apply(p); // 영속 상태 → flush 시 UPDATE
             } else {
-                toSave.add(YouthPolicy.of(p));
+                toInsert.add(YouthPolicy.of(p)); // 신규 INSERT만 saveAll
             }
         }
 
-        repo.saveAll(toSave);
+        if (!toInsert.isEmpty()) {
+            repo.saveAll(toInsert);
+        }
     }
 
-    private static <T> List<T> nullSafe(List<T> l){
+    private static <T> List<T> nullSafe(List<T> l) {
         return (l != null) ? l : Collections.<T>emptyList();
     }
 
@@ -204,7 +215,7 @@ public class YouthPolicyService {
         };
     }
 
-    private boolean notBlank(String s){ return s != null && !s.isBlank(); }
+    private boolean notBlank(String s) { return s != null && !s.isBlank(); }
 
     private Policy toPolicy(YouthPolicy e) {
         return Policy.builder()
