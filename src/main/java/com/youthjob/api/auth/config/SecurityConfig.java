@@ -55,7 +55,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/api/health",
-                                "/api/chat/**"
+                                "/api/chat/**",
+                                "/internal/**"
                                 ).permitAll()
                         .anyRequest().authenticated()
                 )

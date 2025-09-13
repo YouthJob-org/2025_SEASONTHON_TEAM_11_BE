@@ -13,7 +13,6 @@ public interface SavedEmpProgramRepository extends JpaRepository<SavedEmpProgram
     Optional<SavedEmpProgram> findByMemberIdAndExtKey(Long memberId, String extKey);
     List<SavedEmpProgram> findByMemberIdOrderByIdDesc(Long memberId);
 
-    // === 추가: 마이페이지용 ===
     Page<SavedEmpProgram> findByMemberId(Long memberId, Pageable pageable);
     long countByMemberId(Long memberId);
 }
