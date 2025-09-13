@@ -23,7 +23,12 @@ public class YouthPolicyController {
         return ResponseEntity.ok("성공!, 총 " + count + "개의 청년정책 API 연동이 완료되었습니다.");
     }
 
-    /** 검색: DB 기반 */
+    /**
+     * 검색: DB 기반
+     * - 기본값: recruitingOnly=true (지금 모집중인 정책만 뜸)
+     * - 전체 데이터(과거 포함) 보려면 -> ?recruitingOnly=false 붙이기
+     * - 예시) /api/v1/youth-policies?plcyKywdNm=보조금&pageNum=1&pageSize=10
+     */
     @GetMapping
     public YouthPolicyApiResponseDto list(@Valid @ModelAttribute YouthPolicyApiRequestDto req) {
         return service.searchFromDb(req);

@@ -8,12 +8,15 @@ import org.springframework.util.MultiValueMap;
 @Getter
 public class YouthPolicyApiRequestDto {
 
-    // 기본값
+    // 기본 파라미터
     private String rtnType = "json";
     @Min(1) private Integer pageNum = 1;
     @Min(1) private Integer pageSize = 500;
     /** 화면유형: "1"(목록) / "2"(상세) - 스펙은 String */
     private String pageType = "1";
+
+    /** 지금 모집중인 정책 판단 (기본 true) */
+    private Boolean recruitingOnly = Boolean.TRUE;
 
     // 선택 필터
     private String plcyNo;
@@ -25,11 +28,12 @@ public class YouthPolicyApiRequestDto {
     private String lclsfNm;
     private String mclsfNm;
 
-    // --- 바인딩용 최소 setter들 ---
     public void setRtnType(String v)     { if (notBlank(v)) this.rtnType = v; }
     public void setPageNum(Integer v)    { if (v != null && v > 0) this.pageNum = v; }
     public void setPageSize(Integer v)   { if (v != null && v > 0) this.pageSize = v; }
     public void setPageType(String v)    { if (notBlank(v)) this.pageType = v; }
+    public void setRecruitingOnly(Boolean v) { this.recruitingOnly = (v != null) ? v : Boolean.TRUE; }
+
     public void setPlcyNo(String v)      { this.plcyNo = v; }
     public void setPlcyKywdNm(String v)  { this.plcyKywdNm = v; }
     public void setPlcyNm(String v)      { this.plcyNm = v; }
@@ -40,7 +44,7 @@ public class YouthPolicyApiRequestDto {
 
     private static boolean notBlank(String s){ return s != null && !s.isBlank(); }
 
-    /** 외부 API 호출용 파라미터 세트 */
+    /** 외부 API 호출용 파라미터 세트 (DB 조회 중심이지만 기존 클라이언트도 유지) */
     public MultiValueMap<String, String> toQueryParams(String apiKey){
         MultiValueMap<String, String> p = new LinkedMultiValueMap<>();
         // 필수

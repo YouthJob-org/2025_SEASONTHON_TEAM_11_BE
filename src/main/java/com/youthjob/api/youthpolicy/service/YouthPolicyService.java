@@ -18,8 +18,12 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -157,17 +161,43 @@ public class YouthPolicyService {
         return (l != null) ? l : Collections.<T>emptyList();
     }
 
-    /** DB 기반 검색 (외부 API 호출 없음, 기존 응답 스펙 유지) */
+    /** DB 기반 검색: recruitingOnly=true면 '모집중'만 메모리 필터 + 서버측 슬라이싱 페이징 */
     @Transactional(readOnly = true)
     public YouthPolicyApiResponseDto searchFromDb(YouthPolicyApiRequestDto req) {
         int pageNum  = (req.getPageNum()  != null && req.getPageNum()  > 0) ? req.getPageNum()  : 1;
         int pageSize = (req.getPageSize() != null && req.getPageSize() > 0) ? req.getPageSize() : 10;
+        boolean recruitingOnly = (req.getRecruitingOnly() == null) ? true : req.getRecruitingOnly();
 
-        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
         Specification<YouthPolicy> spec = buildSpec(req);
 
-        Page<YouthPolicy> page = repo.findAll(spec, pageable);
-        List<Policy> list = page.getContent().stream().map(this::toPolicy).toList();
+        List<YouthPolicy> finalList;
+        int total;
+
+        if (recruitingOnly) {
+            // 1) 전체(필터 조건은 DB에서 적용) 정렬만 주고 수집
+            List<YouthPolicy> all = repo.findAll(spec, Sort.by(Sort.Direction.DESC, "id"));
+
+            // 2) 오늘 기준 '모집중'만 필터
+            LocalDate today = LocalDate.now();
+            List<YouthPolicy> filtered = all.stream()
+                    .filter(e -> isRecruitingNow(e.getAplyPrdSeCd(), e.getAplyYmd(), today))
+                    .toList();
+
+            // 3) 서버측 슬라이싱 페이징
+            total = filtered.size();
+            int from = Math.max(0, (pageNum - 1) * pageSize);
+            int to   = Math.min(total, from + pageSize);
+            finalList = (from < to) ? filtered.subList(from, to) : List.of();
+
+        } else {
+            // 기존 DB 페이징
+            Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+            Page<YouthPolicy> page = repo.findAll(spec, pageable);
+            total = (int) page.getTotalElements();
+            finalList = page.getContent();
+        }
+
+        List<Policy> list = finalList.stream().map(this::toPolicy).toList();
 
         Map<String, Object> tree = new HashMap<>();
         Map<String, Object> result = new HashMap<>();
@@ -177,7 +207,7 @@ public class YouthPolicyService {
         tree.put("resultMessage", "OK");
         tree.put("result", result);
         result.put("youthPolicyList", mapper.convertValue(list, new TypeReference<List<Map<String,Object>>>(){}));
-        pag.put("totCount", (int) page.getTotalElements());
+        pag.put("totCount", total);
         pag.put("pageNum", pageNum);
         pag.put("pageSize", pageSize);
         result.put("pagging", pag);
@@ -267,5 +297,67 @@ public class YouthPolicyService {
                 .orElseThrow(() -> new IllegalArgumentException("정책을 찾을 수 없습니다: " + plcyNo));
         Policy p = toPolicy(e);
         return YouthPolicyMapper.toDetail(p);
+    }
+
+    // ====== 모집중 판정 유틸 ======
+
+    private static final String APPLY_PERIOD_SPECIFIC = "0057001"; // 특정기간
+    private static final String APPLY_PERIOD_ALWAYS   = "0057002"; // 상시
+    private static final String APPLY_PERIOD_CLOSED   = "0057003"; // 마감
+
+    private static final DateTimeFormatter YYYYMMDD = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final Pattern DATE_TOKEN = Pattern.compile("(\\d{4}[\\.\\-/]?\\d{2}[\\.\\-/]?\\d{2})");
+
+    /** 오늘 기준 모집 여부 */
+    static boolean isRecruitingNow(String aplyPrdSeCd, String aplyYmd, LocalDate today) {
+        if (APPLY_PERIOD_ALWAYS.equals(aplyPrdSeCd)) return true;      // 상시
+        if (APPLY_PERIOD_CLOSED.equals(aplyPrdSeCd)) return false;     // 마감
+        if (!APPLY_PERIOD_SPECIFIC.equals(aplyPrdSeCd)) return false;  // 그 외/비정상 ⇒ 모집 아님
+
+        List<DateRange> ranges = parseRangesFrom(aplyYmd);
+        if (ranges.isEmpty()) return false;
+        for (DateRange r : ranges) {
+            if (r != null && r.start != null && r.end != null) {
+                if (!today.isBefore(r.start) && !today.isAfter(r.end)) return true; // start <= today <= end
+            }
+        }
+        return false;
+    }
+
+    /** "YYYYMMDD ~ YYYYMMDD" 가 여러 줄/\\N로 이어질 수 있음 → 모든 구간을 뽑아냄 */
+    static List<DateRange> parseRangesFrom(String raw) {
+        String v = raw == null ? "" : raw.replace("\\N", "\n");
+        if (v.isBlank()) return List.of();
+
+        List<DateRange> out = new ArrayList<>();
+        String[] lines = v.split("\\r?\\n");
+        for (String line : lines) {
+            Matcher m = DATE_TOKEN.matcher(line);
+            LocalDate s = null, e = null;
+            if (m.find()) s = parseFlexible(m.group(1));
+            if (m.find()) e = parseFlexible(m.group(1));
+            if (s != null && e != null && !e.isBefore(s)) {
+                out.add(new DateRange(s, e));
+            }
+        }
+        return out;
+    }
+
+    static LocalDate parseFlexible(String token) {
+        if (token == null || token.isBlank()) return null;
+        String digits = token.replaceAll("\\D", "");
+        if (digits.length() < 8) return null;
+        String ymd8 = digits.substring(0, 8);
+        try {
+            return LocalDate.parse(ymd8, YYYYMMDD);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    static final class DateRange {
+        final LocalDate start;
+        final LocalDate end;
+        DateRange(LocalDate s, LocalDate e){ this.start = s; this.end = e; }
     }
 }
