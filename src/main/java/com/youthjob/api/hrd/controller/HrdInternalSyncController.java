@@ -1,6 +1,7 @@
 package com.youthjob.api.hrd.controller;
 
 import com.youthjob.api.hrd.service.HrdCatalogSyncService;
+import com.youthjob.api.hrd.service.HrdSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +15,7 @@ import java.util.Map;
 @RequestMapping("/internal/hrd")
 class HrdInternalSyncController {
     private final HrdCatalogSyncService sync;
+    private final HrdSearchService hrds;
 
     @PostMapping("/harvest")
     public java.util.Map<String,Object> harvest(
@@ -38,5 +40,11 @@ class HrdInternalSyncController {
     ) {
         int processed = sync.harvestFullMonthsAheadParallel(months, area1, ncs1, pageSize, maxItems, concurrency);
         return Map.of("months", months, "processed", processed);
+    }
+
+    @PostMapping("/backfill-area1")
+    public Map<String,Object> backfillArea1() {
+        int updated = hrds.backfillArea1InDb();
+        return Map.of("updated", updated);
     }
 }

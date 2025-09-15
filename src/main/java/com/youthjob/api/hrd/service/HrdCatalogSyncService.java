@@ -159,60 +159,20 @@ public class HrdCatalogSyncService {
         return repo.deleteAllEndedBefore(today);
     }
 
-    /** 매주 토요일 00:00 KST: 종료 삭제 후 6개월치 카탈로그 갱신 */
+    /** 매주 토요일 00:00 KST: 종료 삭제 → 6개월 카탈로그 갱신 → area1 백필 → 상세/통계 저장 */
     @Scheduled(cron = "0 0 0 ? * SAT", zone = "Asia/Seoul")
     @Transactional
     public void weeklyRefresh() {
-        int deleted = purgeEnded();
-        int upserts = harvestMonthsAhead(6, null, null);
-        log.info("[HRD weekly] deleted={}, upserts={}", deleted, upserts);
-    }
+        int deleted = purgeEnded();                         // 지난 과정 정리
+        int upserts = harvestMonthsAhead(6, null, null);    // 6개월 요약 수집
+        hrdSearchService.backfillArea1InDb();               // area1 주소 기반 보정
 
-    /* ===================== FULL(상세+통계) 저장: 순차 ===================== */
+        // ── Full(상세+통계) 저장 ──
+        // months=6, area1/ncs1 전체(null), pageSize=200, maxItems=0(제한없음)
+        int processedFull = harvestFullMonthsAheadParallel(6, null, null, 500, 0, 0);
 
-    public int harvestFullMonthsAhead(int months, String area1, String ncs1, int pageSize, int maxItems) {
-        LocalDate today = LocalDate.now(KST);
-        LocalDate end   = today.plusMonths(months);
-
-        Specification<HrdCourseCatalog> spec = Specification.allOf(
-                betweenDates(today, end),
-                (area1 == null || area1.isBlank()) ? null : eqArea(area1),
-                (ncs1  == null || ncs1.isBlank())  ? null : startsWithNcs(ncs1)
-        );
-
-        int processed = 0;
-        int page = 0;
-        Page<HrdCourseCatalog> slice;
-
-        do {
-            Pageable pageable = PageRequest.of(page, Math.max(pageSize, 1),
-                    Sort.by(Sort.Direction.ASC, "traStartDate"));
-            slice = repo.findAll(spec, pageable);
-
-            for (HrdCourseCatalog c : slice) {
-                String torgId = ensureTorgId(c);
-                if (isBlank(torgId)) continue;
-
-                try {
-                    // 내부에서 트랜잭션 열고 HrdCourseFull 업서트
-                    hrdSearchService.getCourseFull(c.getTrprId(), c.getTrprDegr(), torgId);
-                    processed++;
-                } catch (Exception ex) {
-                    log.warn("harvest-full fail trprId={}, degr={}, torgId={}, msg={}",
-                            c.getTrprId(), c.getTrprDegr(), torgId, ex.getMessage());
-                }
-
-                if (maxItems > 0 && processed >= maxItems) {
-                    log.info("harvest-full reached maxItems={}, stop", maxItems);
-                    return processed;
-                }
-            }
-
-            page++;
-        } while (!slice.isEmpty() && slice.hasNext());
-
-        log.info("harvest-full done: processed={}", processed);
-        return processed;
+        log.info("[HRD weekly] deleted={}, catalogUpserts={}, fullProcessed={}",
+                deleted, upserts, processedFull);
     }
 
     /* ===================== FULL(상세+통계) 저장: 병렬 ===================== */
