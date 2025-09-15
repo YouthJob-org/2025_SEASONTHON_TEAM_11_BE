@@ -4,13 +4,18 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.youthjob.api.auth.domain.User;
 import com.youthjob.api.auth.repository.UserRepository;
 import com.youthjob.api.hrd.client.HrdApiClient;
+import com.youthjob.api.hrd.domain.HrdCourseCatalog;
+import com.youthjob.api.hrd.domain.HrdCourseFull;
 import com.youthjob.api.hrd.domain.SavedCourse;
 import com.youthjob.api.hrd.dto.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.youthjob.api.hrd.repository.HrdCourseCatalogRepository;
+import com.youthjob.api.hrd.repository.HrdCourseFullRepository;
 import com.youthjob.api.hrd.repository.SavedCourseRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -18,6 +23,8 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.lang.Integer.max;
 
 @Service
 @RequiredArgsConstructor
@@ -27,89 +34,74 @@ public class HrdSearchService {
 
     private final SavedCourseRepository savedCourseRepository;
     private final UserRepository userRepository;
+    private final HrdCourseFullRepository fullRepo;
 
+    private final HrdCourseCatalogRepository catalogRepo;
+
+    // ====== 변경: OPEN API 대신 DB 조회 ======
     public List<HrdCourseDto> search(String startDt, String endDt, int page, int size,
                                      String area1, String ncs1, String sort, String sortCol) {
-        String json = client.search(startDt, endDt, page, size, area1, ncs1, sort, sortCol);
-        try {
-            JsonNode root = mapper.readTree(json);
+        var fmt = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd");
+        var s = java.time.LocalDate.parse(startDt, fmt);
+        var e = java.time.LocalDate.parse(endDt, fmt);
 
-            // (옵션) 에러 응답 선감지
-            if (root.has("resultCode") && !"0000".equals(root.path("resultCode").asText())) {
-                throw new IllegalStateException("HRD API Error: " + root.path("resultMsg").asText());
-            }
+        String sortProp = switch (sortCol) {
+            case "2" -> "traStartDate";
+            case "3" -> "traEndDate";
+            default  -> "traStartDate";
+        };
+        var direction = "DESC".equalsIgnoreCase(sort)
+                ? org.springframework.data.domain.Sort.Direction.DESC
+                : org.springframework.data.domain.Sort.Direction.ASC;
+        var pageable = org.springframework.data.domain.PageRequest.of(
+                Math.max(page - 1, 0), size, org.springframework.data.domain.Sort.by(direction, sortProp));
 
-            // 정석 경로: HRDNet -> srchList -> scn_list
-            JsonNode list = root.path("HRDNet").path("srchList").path("scn_list");
 
-            // 방어: 변형 응답 (배열 srchList 혹은 객체 내 list/scn_list)
-            if (!list.isArray()) {
-                if (root.has("srchList")) {
-                    JsonNode s = root.get("srchList");
-                    if (s.isArray()) list = s;
-                    else if (s.has("scn_list")) list = s.get("scn_list");
-                    else if (s.has("list")) list = s.get("list");
-                }
-            }
+        Specification<HrdCourseCatalog> spec = Specification.allOf(
+                betweenDates(s, e),
+                (area1 == null || area1.isBlank()) ? null : eqArea(area1),
+                (ncs1 == null || ncs1.isBlank()) ? null : startsWithNcs(ncs1)
+        );
 
-            if (!list.isArray()) {
-                // 목록이 없으면 원문 일부를 포함해 바로 원인 파악
-                throw new IllegalStateException("목록(scn_list)을 찾지 못했습니다. 응답 일부: "
-                        + json.substring(0, Math.min(json.length(), 500)));
-            }
+        var pageRes = catalogRepo.findAll(spec, pageable);
 
-            List<HrdCourseDto> result = new ArrayList<>();
-            for (JsonNode n : list) {
-                String titleLink = n.path("titleLink").asText(null);
-                String subTitleLink = n.path("subTitleLink").asText(null);
+        return pageRes.stream().map(c ->
+                HrdCourseDto.builder()
+                        .title(c.getTitle())
+                        .subTitle(c.getSubTitle())
+                        .address(c.getAddress())
+                        .telNo(c.getTelNo())
+                        .traStartDate(c.getTraStartDate().format(fmt))
+                        .traEndDate(c.getTraEndDate().format(fmt))
+                        .trainTarget(c.getTrainTarget())
+                        .trainTargetCd(c.getTrainTargetCd())
+                        .ncsCd(c.getNcsCd())
+                        .trprId(c.getTrprId())
+                        .trprDegr(c.getTrprDegr())
+                        .courseMan(c.getCourseMan())
+                        .realMan(c.getRealMan())
+                        .yardMan(c.getYardMan())
+                        .titleLink(c.getTitleLink())
+                        .subTitleLink(c.getSubTitleLink())
+                        .torgId(c.getTorgId())
+                        .build()
+        ).toList();
+    }
 
-                // torgId 추출 (우선순위: 명시 필드들 → 링크 쿼리)
-                String torgId = null;
-                if (n.hasNonNull("torgId")) {
-                    torgId = n.get("torgId").asText();
-                } else if (n.hasNonNull("instIno")) {
-                    torgId = n.get("instIno").asText();
-                } else if (n.hasNonNull("cstmrId")) {
-                    torgId = n.get("cstmrId").asText();
-                } else if (n.hasNonNull("trainstCstmrId")) {
-                    torgId = n.get("trainstCstmrId").asText();
-                } else {
-                    // 링크 쿼리에서 키 후보들을 순서대로 시도
-                    torgId = firstNonNull(
-                            extractQuery(titleLink, "trainstCstmrId"),
-                            extractQuery(titleLink, "srchTorgId"),
-                            extractQuery(titleLink, "cstmrId"),
-                            extractQuery(subTitleLink, "trainstCstmrId"),
-                            extractQuery(subTitleLink, "srchTorgId"),
-                            extractQuery(subTitleLink, "cstmrId")
-                    );
-                }
-
-                result.add(HrdCourseDto.builder()
-                        .title(n.path("title").asText(null))
-                        .subTitle(n.path("subTitle").asText(null))
-                        .address(n.path("address").asText(null))
-                        .telNo(n.path("telNo").asText(null))
-                        .traStartDate(n.path("traStartDate").asText(null))
-                        .traEndDate(n.path("traEndDate").asText(null))
-                        .trainTarget(n.path("trainTarget").asText(null))
-                        .trainTargetCd(n.path("trainTargetCd").asText(null))
-                        .ncsCd(n.path("ncsCd").asText(null))
-                        .trprId(n.path("trprId").asText(null))
-                        .trprDegr(n.path("trprDegr").asText(null))
-                        .courseMan(n.path("courseMan").asText(null))
-                        .realMan(n.path("realMan").asText(null))
-                        .yardMan(n.path("yardMan").asText(null))
-                        .titleLink(n.path("titleLink").asText(null))
-                        .subTitleLink(n.path("subTitleLink").asText(null))
-                        .torgId(torgId)
-                        .build());
-            }
-            return result;
-
-        } catch (Exception e) {
-            throw new RuntimeException("HRD 응답 파싱 실패", e);
-        }
+    private org.springframework.data.jpa.domain.Specification<com.youthjob.api.hrd.domain.HrdCourseCatalog>
+    betweenDates(java.time.LocalDate s, java.time.LocalDate e) {
+        return (root, q, cb) -> cb.and(
+                cb.greaterThanOrEqualTo(root.get("traEndDate"), s),   // 종료일이 시작일 이후
+                cb.lessThanOrEqualTo(root.get("traStartDate"), e)     // 시작일이 종료일 이전 (기간 겹침)
+        );
+    }
+    private org.springframework.data.jpa.domain.Specification<com.youthjob.api.hrd.domain.HrdCourseCatalog>
+    eqArea(String area1) {
+        return (root, q, cb) -> cb.equal(root.get("area1"), area1);
+    }
+    private org.springframework.data.jpa.domain.Specification<com.youthjob.api.hrd.domain.HrdCourseCatalog>
+    startsWithNcs(String ncs1) {
+        return (root, q, cb) -> cb.like(root.get("ncsCd"), ncs1 + "%");
     }
 
     public HrdCourseDetailDto getDetail(String trprId, String trprDegr, String torgId) {
@@ -209,12 +201,13 @@ public class HrdSearchService {
         }
     }
 
+    @jakarta.transaction.Transactional
     public HrdCourseFullDto getCourseFull(String trprId, String trprDegr, String torgId) {
-        // 그냥 detail 먼저 가져오기
         HrdCourseDetailDto detail = getDetail(trprId, trprDegr, torgId);
+        java.util.List<HrdCourseStatDto> stats = getStats(trprId, torgId, trprDegr);
 
-        // stats 가져오기
-        List<HrdCourseStatDto> stats = getStats(trprId, torgId, trprDegr);
+
+        upsertFull(trprId, trprDegr, torgId, detail, stats);
 
         return HrdCourseFullDto.builder()
                 .detail(detail)
@@ -363,4 +356,23 @@ public class HrdSearchService {
         }
         return saveCourse(req);
     }
+
+    // 업서트 메서드
+    @jakarta.transaction.Transactional
+    public void upsertFull(String trprId, String trprDegr, String torgId,
+                           HrdCourseDetailDto detail, java.util.List<HrdCourseStatDto> stats) {
+
+        var e = fullRepo.findByTrprIdAndTrprDegrAndTorgId(trprId, trprDegr, torgId)
+                .orElseGet(() -> HrdCourseFull.builder()
+                        .trprId(trprId).trprDegr(trprDegr).torgId(torgId)
+                        .build());
+
+        e.applyDetail(detail);
+        e.setStats(stats);
+        e.setSavedAt(java.time.Instant.now());
+
+        fullRepo.save(e);
+    }
+
+
 }

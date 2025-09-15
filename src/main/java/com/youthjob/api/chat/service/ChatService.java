@@ -10,7 +10,6 @@ public class ChatService {
 
     private final OpenAiClient openAi;
 
-    // 청년 맞춤 톤 고정 (필요하면 자유롭게 수정)
     private static final String SYSTEM_PROMPT = """
         너는 YouthJob의 챗봇이자, 청년들의 취업·교육·역량개발을 돕는 멘토다.
         - 말투: 따뜻하고 간결, 실용적인 조언 위주.
