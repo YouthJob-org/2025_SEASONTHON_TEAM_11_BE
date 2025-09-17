@@ -30,7 +30,6 @@ public class OpenAiClient {
     }
 
     public String ask(String systemPrompt, String userPrompt) {
-        // 생성자가 없다고 뜨면 아래 builder 버전으로 바꿔서 써도 됩니다.
         ChatMessage system = new ChatMessage("system", systemPrompt);
         ChatMessage user   = new ChatMessage("user",   userPrompt);
 
