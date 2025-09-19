@@ -100,7 +100,7 @@ public class Work24CrawlerService {
         String titleHint;
         String companyHint;
     }
-    
+
 
     @Transactional
     public int crawlAndSave() throws Exception {
