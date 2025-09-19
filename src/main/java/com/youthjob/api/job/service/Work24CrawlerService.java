@@ -51,7 +51,7 @@ public class Work24CrawlerService {
     private static final DateTimeFormatter YMD  = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     // ── Paging
-    private static final int PAGE_SIZE = 10;     // 화면과 동일
+    private static final int PAGE_SIZE = 50;
     private static final int MAX_PAGES_HARD = 3000;
     private static final Pattern ATTR_KEY_RE =
             Pattern.compile("(?i)wanted.*auth.*no|seq.*no|emp.*seq.*no");
@@ -87,7 +87,6 @@ public class Work24CrawlerService {
     // 급여 라벨: "임금 조건", "급여 조건" 등 변형까지 허용
     private static final String RX_SALARY =
             "임금" + WS + "조건|급여" + WS + "조건|임금|급여|연봉|월급|시급|일급";
-    private static final String RX_CONTACT  = "담당자|연락처|문의처|전화번호|채용담당자|담당\\s*부서";
     private static final String RX_POSTED   = "등록일|게시일|게재일|공고시작|모집시작일";
     private static final String RX_DEADLINE = "마감일|접수마감|공고마감|모집마감일";
 
@@ -101,8 +100,7 @@ public class Work24CrawlerService {
         String titleHint;
         String companyHint;
     }
-
-    // ───────────────────────────────────────────────────────────────
+    
 
     @Transactional
     public int crawlAndSave() throws Exception {
@@ -146,7 +144,7 @@ public class Work24CrawlerService {
                             n(link.getTitleHint()),
                             n(link.getCompanyHint()),
                             null, null, null, null,
-                            null, null
+                            null
                     );
                     log.debug("detail parse failed. fallback with hints. url={}", link.getUrl());
                 }
@@ -184,7 +182,6 @@ public class Work24CrawlerService {
 
                 job.setEmploymentType( n(e.getEmploymentType()) );
                 job.setSalary( n(e.getSalary()) );
-                job.setContact( n(e.getContact()) );
                 job.setRegDate(regDate);
                 job.setDeadline(deadline);
 
@@ -389,8 +386,9 @@ public class Work24CrawlerService {
                     ".addr", ".workplace", ".region"               // ← '.location' 제거!
             );
             String empType = pickByLabel(d, RX_EMPLOY);
+            if (isBlank(empType)) empType = pickInlineByEm(d, RX_EMPLOY);  // ⬅️ 추가
+            if (isBlank(empType)) empType = pickFirstCss(d, ".employment", ".emp-type");
             String salary  = pickByLabel(d, RX_SALARY);
-            String contact = normalizePhone(pickByLabel(d, RX_CONTACT));
 
             LocalDate posted   = parseAnyDate(pickByLabel(d, RX_POSTED));
             LocalDate deadline = parseAnyDate(pickByLabel(d, RX_DEADLINE));
@@ -401,7 +399,7 @@ public class Work24CrawlerService {
             if (posted == null)   posted  = parseAnyDate(d.text());
             if (deadline == null) deadline= parseAnyDate(findNear(d, "마감|마감일|접수마감"));
 
-            return new Enriched(n(title), n(company), n(region), n(empType), n(salary), n(contact), posted, deadline);
+            return new Enriched(n(title), n(company), n(region), n(empType), n(salary), posted, deadline);
         } catch (Exception e) {
             log.debug("detail fetch fail {} -> {}", url, e.toString());
             return null;

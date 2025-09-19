@@ -14,7 +14,6 @@ public class Enriched {
     private String region;
     private String employmentType;
     private String salary;
-    private String contact;
     private LocalDate regDate;
     private LocalDate deadline;
 }

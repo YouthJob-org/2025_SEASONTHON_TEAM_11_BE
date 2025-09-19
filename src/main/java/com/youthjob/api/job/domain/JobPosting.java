@@ -10,8 +10,11 @@ import java.time.LocalDate;
         @Index(name = "idx_job_deadline", columnList = "deadline"),
         @Index(name = "idx_job_regdate", columnList = "regDate")
 })
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class JobPosting {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,5 +33,4 @@ public class JobPosting {
 
     private String employmentType;
     private String salary;
-    private String contact;
 }
