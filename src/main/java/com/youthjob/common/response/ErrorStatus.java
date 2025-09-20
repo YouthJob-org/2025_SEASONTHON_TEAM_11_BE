@@ -42,7 +42,13 @@ public enum ErrorStatus {
     /**
      * 404 NOT_FOUND
      */
+    NOT_FOUND_JOB(HttpStatus.NOT_FOUND, "채용공고를 찾을 수 없습니다."),
+    NOT_FOUND_SAVED_JOB(HttpStatus.NOT_FOUND, "저장 내역이 없습니다."),
 
+    /**
+     * 409 CONFLICT
+     */
+    CONFLICT_SAVED_JOB_ALREADY(HttpStatus.CONFLICT, "이미 저장된 채용정보입니다."),
 
     /**
      * 500 SERVER_ERROR

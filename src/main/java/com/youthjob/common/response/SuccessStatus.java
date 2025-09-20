@@ -29,6 +29,16 @@ public enum SuccessStatus {
     HRD_SAVED_DELETE_SUCCESS(HttpStatus.OK, "관심 훈련과정 삭제 성공"),
     HRD_SAVED_TOGGLE_SUCCESS(HttpStatus.OK, "관심 훈련과정 토글 성공"),
 
+    // === JOB(채용) 관련 ===
+    JOB_SEARCH_SUCCESS(HttpStatus.OK, "채용공고 조회 성공"),
+    JOB_GET_SUCCESS(HttpStatus.OK, "채용공고 단건 조회 성공"),
+    JOB_UPSERT_SUCCESS(HttpStatus.OK, "채용공고 저장 성공"),
+
+    JOB_SAVED_ADD_SUCCESS(HttpStatus.OK, "관심 채용 저장 성공"),
+    JOB_SAVED_DELETE_SUCCESS(HttpStatus.OK, "관심 채용 삭제 성공"),
+    JOB_SAVED_TOGGLE_SUCCESS(HttpStatus.OK, "관심 채용 토글 성공"),
+    JOB_SAVED_LIST_SUCCESS(HttpStatus.OK, "관심 채용 목록 조회 성공"),
+    JOB_SAVED_EXISTS_SUCCESS(HttpStatus.OK, "관심 채용 여부 조회 성공"),
     /**
      * 201 CREATED
      */
