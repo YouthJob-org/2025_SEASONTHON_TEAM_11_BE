@@ -69,6 +69,9 @@ dependencies {
 	implementation("com.fasterxml.jackson.core:jackson-databind")
 
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+	//Jsoup
+	implementation 'org.jsoup:jsoup:1.17.2'
 }
 
 tasks.named('test') {
