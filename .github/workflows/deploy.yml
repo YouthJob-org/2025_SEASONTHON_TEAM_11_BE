@@ -84,6 +84,7 @@ jobs:
           source: "deploy/prometheus.yml"
           target: "/opt/monitoring/"
           overwrite: true
+          strip_components: 1   # ← 추가
 
       # 3) App + Prometheus + Grafana 기동
       - name: Deploy on EC2 via SSH
