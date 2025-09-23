@@ -2,11 +2,11 @@ name: Backend CD
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/youthjob  # 본인 Docker Hub 리포명
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/youthjob
   CONTAINER_NAME: spring-app
   PORT: "8080"
 
@@ -30,13 +30,12 @@ jobs:
       # application.yml 생성 (Secret 값 삽입)
       - name: Create application.yml
         run: |
-          mkdir -p ./src/main/resources  
+          mkdir -p ./src/main/resources
           cat > ./src/main/resources/application.yml <<'EOF'
           ${{ secrets.APPLICATION_YML }}
           EOF
-          echo "===== application.yml 내용 ====="
-          cat ./src/main/resources/application.yml
-
+          echo "===== application.yml ====="
+          sed -n '1,60p' ./src/main/resources/application.yml
 
       - name: Build
         run: ./gradlew clean build -x test
@@ -63,7 +62,19 @@ jobs:
       - name: Checkout (for scp source)
         uses: actions/checkout@v4
 
-      # 1) Prometheus 설정파일 업로드
+      # 1) EC2에 /opt/monitoring 디렉터리 준비(권한 부여)
+      - name: Prepare /opt/monitoring on EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            sudo mkdir -p /opt/monitoring
+            sudo chown $USER:$USER /opt/monitoring
+
+      # 2) Prometheus 설정 파일 업로드
       - name: Upload prometheus.yml to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -74,7 +85,7 @@ jobs:
           target: "/opt/monitoring/"
           overwrite: true
 
-      # 2) 컨테이너들 실행
+      # 3) App + Prometheus + Grafana 기동
       - name: Deploy on EC2 via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -85,27 +96,32 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-            
+
             IMAGE="${{ env.IMAGE_NAME }}"
             TAG="${{ github.sha }}"
             NAME="${{ env.CONTAINER_NAME }}"
             PORT="${{ env.PORT }}"
             PROM_FILE="/opt/monitoring/prometheus.yml"
-            
+
+            # 네트워크
             docker network create monnet 2>/dev/null || true
-            
+
+            # 이미지 pull
             docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" -p "${{ secrets.DOCKERHUB_TOKEN }}"
             docker pull "$IMAGE:$TAG"
-            
+
+            # 기존 컨테이너 정리
             docker rm -f "$NAME" prometheus grafana 2>/dev/null || true
-            
+
+            # App
             docker run -d \
               --name "$NAME" \
               --restart unless-stopped \
               --network monnet \
               -p "${PORT}:8080" \
               "$IMAGE:$TAG"
-            
+
+            # Prometheus
             docker run -d \
               --name prometheus \
               --restart unless-stopped \
@@ -116,7 +132,8 @@ jobs:
               prom/prometheus:latest \
               --config.file=/etc/prometheus/prometheus.yml \
               --storage.tsdb.retention.time=15d
-            
+
+            # Grafana
             docker run -d \
               --name grafana \
               --restart unless-stopped \
@@ -126,3 +143,6 @@ jobs:
               -v grafana-data:/var/lib/grafana \
               -p 3000:3000 \
               grafana/grafana:latest
+
+            # (참고) 헬스체크는 불안정하여 제거함
+            # curl -fsS http://localhost:${PORT}/actuator/health
