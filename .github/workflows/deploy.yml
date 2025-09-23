@@ -60,6 +60,21 @@ jobs:
     runs-on: ubuntu-latest
     needs: build_and_push
     steps:
+      - name: Checkout (for scp source)
+        uses: actions/checkout@v4
+
+      # 1) Prometheus 설정파일 업로드
+      - name: Upload prometheus.yml to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: "deploy/prometheus.yml"
+          target: "/opt/monitoring/"
+          overwrite: true
+
+      # 2) 컨테이너들 실행
       - name: Deploy on EC2 via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -75,20 +90,15 @@ jobs:
             TAG="${{ github.sha }}"
             NAME="${{ env.CONTAINER_NAME }}"
             PORT="${{ env.PORT }}"
+            PROM_FILE="/opt/monitoring/prometheus.yml"
             
-            # 0) 네트워크(없으면 생성)
             docker network create monnet 2>/dev/null || true
             
-            # 1) Docker Hub 로그인
             docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" -p "${{ secrets.DOCKERHUB_TOKEN }}"
-            
-            # 2) 앱 새 이미지 pull
             docker pull "$IMAGE:$TAG"
             
-            # 3) 기존 컨테이너 정리
             docker rm -f "$NAME" prometheus grafana 2>/dev/null || true
             
-            # 4) 앱 컨테이너 실행
             docker run -d \
               --name "$NAME" \
               --restart unless-stopped \
@@ -96,30 +106,17 @@ jobs:
               -p "${PORT}:8080" \
               "$IMAGE:$TAG"
             
-            # 5) Prometheus 설정 파일 준비(EC2에 저장)
-            sudo tee /opt/monitoring-prometheus.yml >/dev/null <<'YAML'
-            global:
-              scrape_interval: 15s
-            scrape_configs:
-              - job_name: "youthjob"
-                metrics_path: "/actuator/prometheus"
-                static_configs:
-                  - targets: ["spring-app:8080"]   # 앱 컨테이너 이름/포트
-            YAML
-            
-            # 6) Prometheus 기동
             docker run -d \
               --name prometheus \
               --restart unless-stopped \
               --network monnet \
-              -v /opt/monitoring-prometheus.yml:/etc/prometheus/prometheus.yml:ro \
+              -v "$PROM_FILE":/etc/prometheus/prometheus.yml:ro \
               -v prometheus-data:/prometheus \
               -p 9090:9090 \
               prom/prometheus:latest \
               --config.file=/etc/prometheus/prometheus.yml \
               --storage.tsdb.retention.time=15d
             
-            # 7) Grafana 기동
             docker run -d \
               --name grafana \
               --restart unless-stopped \
@@ -129,10 +126,3 @@ jobs:
               -v grafana-data:/var/lib/grafana \
               -p 3000:3000 \
               grafana/grafana:latest
-            
-            # 8) 헬스체크(선택)
-            sleep 5
-            curl -fsS http://localhost:${PORT}/actuator/health || (echo "App not healthy" && exit 1)
-            
-            # 9) 이미지 정리(안전)
-            docker image prune -af --filter "until=24h" || true
