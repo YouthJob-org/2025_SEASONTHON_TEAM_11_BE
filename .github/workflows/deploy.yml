@@ -70,28 +70,69 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-
+            
             IMAGE="${{ env.IMAGE_NAME }}"
             TAG="${{ github.sha }}"
             NAME="${{ env.CONTAINER_NAME }}"
             PORT="${{ env.PORT }}"
-
+            
+            # 0) 네트워크(없으면 생성)
+            docker network create monnet 2>/dev/null || true
+            
             # 1) Docker Hub 로그인
             docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" -p "${{ secrets.DOCKERHUB_TOKEN }}"
-
-            # 2) 새 이미지 pull
+            
+            # 2) 앱 새 이미지 pull
             docker pull "$IMAGE:$TAG"
             
             # 3) 기존 컨테이너 정리
-            docker stop "$NAME" 2>/dev/null || true
-            docker rm "$NAME" 2>/dev/null || true
+            docker rm -f "$NAME" prometheus grafana 2>/dev/null || true
             
-            # 4) 컨테이너 실행 (config 마운트 불필요)
+            # 4) 앱 컨테이너 실행
             docker run -d \
               --name "$NAME" \
               --restart unless-stopped \
+              --network monnet \
               -p "${PORT}:8080" \
               "$IMAGE:$TAG"
             
-            # 5) 안 쓰는 이미지 정리
-            docker image prune -f
+            # 5) Prometheus 설정 파일 준비(EC2에 저장)
+            sudo tee /opt/monitoring-prometheus.yml >/dev/null <<'YAML'
+            global:
+              scrape_interval: 15s
+            scrape_configs:
+              - job_name: "youthjob"
+                metrics_path: "/actuator/prometheus"
+                static_configs:
+                  - targets: ["spring-app:8080"]   # 앱 컨테이너 이름/포트
+            YAML
+            
+            # 6) Prometheus 기동
+            docker run -d \
+              --name prometheus \
+              --restart unless-stopped \
+              --network monnet \
+              -v /opt/monitoring-prometheus.yml:/etc/prometheus/prometheus.yml:ro \
+              -v prometheus-data:/prometheus \
+              -p 9090:9090 \
+              prom/prometheus:latest \
+              --config.file=/etc/prometheus/prometheus.yml \
+              --storage.tsdb.retention.time=15d
+            
+            # 7) Grafana 기동
+            docker run -d \
+              --name grafana \
+              --restart unless-stopped \
+              --network monnet \
+              -e GF_SECURITY_ADMIN_USER=admin \
+              -e GF_SECURITY_ADMIN_PASSWORD='${{ secrets.GRAFANA_ADMIN_PASSWORD }}' \
+              -v grafana-data:/var/lib/grafana \
+              -p 3000:3000 \
+              grafana/grafana:latest
+            
+            # 8) 헬스체크(선택)
+            sleep 5
+            curl -fsS http://localhost:${PORT}/actuator/health || (echo "App not healthy" && exit 1)
+            
+            # 9) 이미지 정리(안전)
+            docker image prune -af --filter "until=24h" || true
