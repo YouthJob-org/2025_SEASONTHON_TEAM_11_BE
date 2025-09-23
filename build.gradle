@@ -72,6 +72,10 @@ dependencies {
 
 	//Jsoup
 	implementation 'org.jsoup:jsoup:1.17.2'
+
+	//Monitoring
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {
