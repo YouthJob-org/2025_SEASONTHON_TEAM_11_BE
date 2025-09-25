@@ -141,6 +141,13 @@ jobs:
               --network monnet \
               -e GF_SECURITY_ADMIN_USER=admin \
               -e GF_SECURITY_ADMIN_PASSWORD='${{ secrets.GRAFANA_ADMIN_PASSWORD }}' \
+              -e GF_SMTP_ENABLED=true \
+              -e GF_SMTP_HOST='smtp.gmail.com:587' \
+              -e GF_SMTP_USER='dngus0717@gmail.com' \
+              -e GF_SMTP_PASSWORD='${{ secrets.GF_SMTP_PASSWORD }}' \
+              -e GF_SMTP_FROM_ADDRESS='dngus0717@gmail.com' \
+              -e GF_SMTP_FROM_NAME='Grafana' \
+              -e GF_SMTP_SKIP_VERIFY=true \
               -v grafana-data:/var/lib/grafana \
               -p 3000:3000 \
               grafana/grafana:latest
