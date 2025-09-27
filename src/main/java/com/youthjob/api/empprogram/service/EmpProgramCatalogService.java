@@ -140,14 +140,14 @@ public class EmpProgramCatalogService {
         return inserted;
     }
 
-    /** 오늘 이전에 종료된 일정 제거 (pgmEndt < today) */
+
     @Transactional
     public int purgePast(String todayYyyymmdd) {
         return repo.deleteAllEndedBefore(todayYyyymmdd);
     }
 
-    // 매주 토요일 0시(자정)에 실행
-    @Scheduled(cron = "0 0 0 * * SAT", zone = "Asia/Seoul")
+    // 매주 일요일 0시(자정)에 실행
+    @Scheduled(cron = "0 0 0 * * SUN", zone = "Asia/Seoul")
     @Transactional
     public void weeklyRefresh() {
         String today = todayYyyymmdd();
