@@ -160,22 +160,21 @@ public class HrdCatalogSyncService {
     }
 
     /** 매주 토요일 00:00 KST: 종료 삭제 → 6개월 카탈로그 갱신 → area1 백필 → 상세/통계 저장 */
-    @Scheduled(cron = "0 0 0 ? * SAT", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 0 * * SUN", zone = "Asia/Seoul")
     @Transactional
     public void weeklyRefresh() {
         int deleted = purgeEnded();                         // 지난 과정 정리
         int upserts = harvestMonthsAhead(6, null, null);    // 6개월 요약 수집
         hrdSearchService.backfillArea1InDb();               // area1 주소 기반 보정
 
-        // ── Full(상세+통계) 저장 ──
-        // months=6, area1/ncs1 전체(null), pageSize=200, maxItems=0(제한없음)
+        // Full(상세+교육기관 정보) 저장
         int processedFull = harvestFullMonthsAheadParallel(6, null, null, 500, 0, 0);
 
         log.info("[HRD weekly] deleted={}, catalogUpserts={}, fullProcessed={}",
                 deleted, upserts, processedFull);
     }
 
-    /* ===================== FULL(상세+통계) 저장: 병렬 ===================== */
+    //FULL(상세+통계) 저장: 병렬
     public int harvestFullMonthsAheadParallel(int months, String area1, String ncs1,
                                               int pageSize, int maxItems, int concurrencyIgnored) {
         LocalDate today = LocalDate.now(KST);

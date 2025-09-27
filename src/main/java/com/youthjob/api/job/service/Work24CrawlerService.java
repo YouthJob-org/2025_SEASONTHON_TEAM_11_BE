@@ -10,6 +10,7 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -721,6 +722,23 @@ public class Work24CrawlerService {
         if (s == null) return null;
         s = s.trim();
         return (s.length() <= max) ? s : s.substring(0, max);
+    }
+
+    @Transactional
+    public int purgeExpired() {
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        int deleted = repo.deleteAllDeadlineBefore(today);
+        log.info("[Scheduler] Work24CrawlerService → deleted {} expired jobs", deleted);
+        return deleted;
+    }
+
+    //매일 새벽 3시 크롤링, 마감일 지난 채용공고 삭제
+    @Scheduled(cron = "0 0 3 * * *", zone = "Asia/Seoul")
+    @Transactional
+    public void scheduledCrawl() throws Exception {
+        int deleted = purgeExpired();
+        int saved = crawlAndSave();
+        log.info("[Scheduler] Work24CrawlerService → deleted {}, saved {} jobs", deleted, saved);
     }
 
 }
