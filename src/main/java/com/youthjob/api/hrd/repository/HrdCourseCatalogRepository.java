@@ -1,6 +1,7 @@
 package com.youthjob.api.hrd.repository;
 
 import com.youthjob.api.hrd.domain.HrdCourseCatalog;
+import com.youthjob.api.hrd.dto.HrdCourseRow;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
@@ -45,4 +46,31 @@ public interface HrdCourseCatalogRepository extends JpaRepository<HrdCourseCatal
           and address is not null
         """, nativeQuery = true)
     int bulkBackfillArea1();
+
+
+    // (1) area1이 있을 때: area1 동등 → 날짜 범위 순서 (인덱스와 일치)
+    @Query("""
+    select c from HrdCourseCatalog c
+    where c.area1 = :area1
+      and c.traStartDate <= :e and c.traEndDate >= :s
+      and (:ncs is null or c.ncsCd like concat(:ncs, '%'))
+    """)
+    Slice<HrdCourseRow> findSliceByArea1(
+            @Param("s") LocalDate s,
+            @Param("e") LocalDate e,
+            @Param("area1") String area1,
+            @Param("ncs") String ncs,
+            Pageable pageable);
+
+    // (2) area1이 없을 때: 시작일 우선 + (선택) ncs prefix
+    @Query("""
+            select c from HrdCourseCatalog c
+            where c.traStartDate <= :e and c.traEndDate >= :s
+              and (:ncs is null or c.ncsCd like concat(:ncs, '%'))
+            """)
+    Slice<HrdCourseRow> findSliceNoArea1(
+            @Param("s") LocalDate s,
+            @Param("e") LocalDate e,
+            @Param("ncs") String ncs,
+            Pageable pageable);
 }
