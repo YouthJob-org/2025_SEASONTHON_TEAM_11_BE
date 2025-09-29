@@ -85,18 +85,6 @@ public class HrdSearchService {
 
     private String blankToNull(String s){ return (s==null||s.isBlank())?null:s; }
 
-    private Specification<HrdCourseCatalog> betweenDates(LocalDate s, LocalDate e) {
-        return (root, q, cb) -> cb.and(
-                cb.greaterThanOrEqualTo(root.get("traEndDate"), s),
-                cb.lessThanOrEqualTo(root.get("traStartDate"), e)
-        );
-    }
-    private Specification<HrdCourseCatalog> eqArea(String area1) {
-        return (root, q, cb) -> cb.equal(root.get("area1"), area1);
-    }
-    private Specification<HrdCourseCatalog> startsWithNcs(String ncs1) {
-        return (root, q, cb) -> cb.like(root.get("ncsCd"), ncs1 + "%");
-    }
 
     /* ======================= 상세/통계 - DB 우선 ======================= */
 
