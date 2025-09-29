@@ -45,9 +45,11 @@ public class HrdSearchService {
     private final SavedCourseRepository savedCourseRepository;
     private final UserRepository userRepository;
 
+    public record SliceResponse<T>(List<T> content, boolean hasNext) {}
+
     /* ======================= 검색(카탈로그) - DB ======================= */
     @Transactional(readOnly = true)
-    public List<HrdCourseDto> search(String startDt, String endDt, int page, int size,
+    public SliceResponse<HrdCourseDto> search(String startDt, String endDt, int page, int size,
                                      String area1, String ncs1, String sort, String sortCol) {
         var fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
         var s = LocalDate.parse(startDt, fmt);
@@ -61,7 +63,8 @@ public class HrdSearchService {
                 ? catalogRepo.findSliceByArea1(s, e, area1, blankToNull(ncs1), pageable)
                 : catalogRepo.findSliceNoArea1(s, e, blankToNull(ncs1), pageable);
 
-        return slice.stream().map(r -> HrdCourseDto.builder()
+
+        var list = slice.stream().map(r -> HrdCourseDto.builder()
                 .title(r.getTitle())
                 .subTitle(r.getSubTitle())
                 .address(r.getAddress())
@@ -81,6 +84,7 @@ public class HrdSearchService {
                 .torgId(r.getTorgId())
                 .build()
         ).toList();
+        return new SliceResponse<>(list, slice.hasNext());
     }
 
     private String blankToNull(String s){ return (s==null||s.isBlank())?null:s; }
