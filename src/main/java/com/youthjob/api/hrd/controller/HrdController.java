@@ -4,6 +4,9 @@ import com.youthjob.api.hrd.dto.*;
 import com.youthjob.api.hrd.service.HrdSearchService;
 import com.youthjob.common.response.ApiResponse;
 import com.youthjob.common.response.SuccessStatus;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -11,12 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * HRD 검색/상세/통계/저장 API
- * - 목록(search): DB(HrdCourseCatalog)에서 조회
- * - 상세(detail), 통계(stats), 풀(full): 서비스가 DB(HrdCourseFull) 우선 조회 → 없으면 API 호출/업서트
- *   (프론트 파라미터/응답 형식은 그대로 유지)
- */
+
+@Tag(name = "HRD", description = "내일배움카드 교육 검색, 상세정보, 저장 관련 API 입니다.")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/hrd")
@@ -24,9 +23,15 @@ public class HrdController {
 
     private final HrdSearchService searchService;
 
-    /** 목록 조회: DB 카탈로그에서 페이징/정렬/필터 */
+    @Operation(
+            summary = "내일배움 카드 교육 검색",
+            description = "지역, 훈련 분야를 기준으로 검색 결과 반환"
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "검색 성공")
+    })
     @GetMapping("/courses")
-    public ResponseEntity<HrdSearchService.SliceResponse<HrdCourseDto>> search(
+    public ResponseEntity<ApiResponse<HrdSearchService.SliceResponse<HrdCourseDto>>> search(
             @RequestParam String startDt,
             @RequestParam String endDt,
             @RequestParam(defaultValue = "1") int page,
@@ -36,24 +41,34 @@ public class HrdController {
             @RequestParam(defaultValue = "ASC") String sort,
             @RequestParam(defaultValue = "2") String sortCol
     ) {
-        return ResponseEntity.ok(
+        return ApiResponse.success(
+                SuccessStatus.HRD_SEARCH_SUCCESS,
                 searchService.search(startDt, endDt, page, size, area1, ncs1, sort, sortCol)
         );
     }
 
-    /** 상세(기관/훈련과정 기본정보): DB(HrdCourseFull) 우선 → 없으면 API 호출 후 업서트 */
+
+    @Operation(
+            summary = "교육 상세정보",
+            description = "훈련, 훈련기관 상세정보 반환"
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상세정보 조회 성공")
+    })
     @GetMapping("/courses/{trprId}/{trprDegr}")
-    public ResponseEntity<HrdCourseDetailDto> detail(
+    public ResponseEntity<ApiResponse<HrdCourseDetailDto>> detail(
             @PathVariable String trprId,
             @PathVariable String trprDegr,
             @RequestParam String torgId
     ) {
-        return ResponseEntity.ok(
+
+        return ApiResponse.success(
+                SuccessStatus.HRD_DETAIL_SUCCESS,
                 searchService.getDetail(trprId, trprDegr, torgId)
         );
     }
 
-    /** 통계(수료/취업률 등): DB(HrdCourseFull.stats) 우선 → 없으면 API */
+
     @GetMapping("/courses/{trprId}/stats")
     public ResponseEntity<List<HrdCourseStatDto>> stats(
             @PathVariable String trprId,
@@ -65,20 +80,43 @@ public class HrdController {
         );
     }
 
-    /** 상세+통계 묶음: DB 우선 → 없으면 API 호출 후 업서트 */
+    @Operation(
+            summary = "교육 상세 + 통계정보",
+            description = "훈련과정 상세정보와 통계정보를 함께 반환, 교육 상세정보 페이지에서 활용"
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "상세 + 통계정보 조회 성공"
+            )
+    })
     @GetMapping("/courses/{trprId}/{trprDegr}/full")
-    public ResponseEntity<HrdCourseFullDto> full(
+    public ResponseEntity<ApiResponse<HrdCourseFullDto>> full(
             @PathVariable String trprId,
             @PathVariable String trprDegr,
             @RequestParam String torgId
     ) {
-        return ResponseEntity.ok(
+        return ApiResponse.success(
+                SuccessStatus.HRD_FULL_SUCCESS,
                 searchService.getCourseFull(trprId, trprDegr, torgId)
         );
     }
 
-    /* ===== 저장 목록/추가/삭제/토글 (기존 프론트 응답 래핑 그대로 유지) ===== */
 
+    @Operation(
+            summary = "저장된 훈련과정 목록 조회",
+            description = "현재 로그인한 사용자가 즐겨찾기한 HRD 훈련과정 목록을 반환"
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "저장된 목록 조회 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자"
+            )
+    })
     @GetMapping("/saved")
     public ResponseEntity<ApiResponse<List<SavedCourseDto>>> listSaved() {
         return ApiResponse.success(
@@ -87,6 +125,26 @@ public class HrdController {
         );
     }
 
+
+
+    @Operation(
+            summary = "훈련과정 즐겨찾기 추가",
+            description = "훈련과정을 즐겨찾기 목록에 추가합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "즐겨찾기 추가 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "요청 데이터가 올바르지 않음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자"
+            )
+    })
     @PostMapping("/saved")
     public ResponseEntity<ApiResponse<SavedCourseDto>> save(@RequestBody @Valid SaveCourseRequest req) {
         return ApiResponse.success(
@@ -95,12 +153,51 @@ public class HrdController {
         );
     }
 
+
+    @Operation(
+            summary = "훈련과정 즐겨찾기 삭제",
+            description = "저장된 훈련과정 중 지정한 항목을 삭제합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "즐겨찾기 삭제 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "삭제할 항목을 찾을 수 없음"
+            )
+    })
     @DeleteMapping("/saved/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         searchService.deleteSaved(id);
         return ApiResponse.successOnly(SuccessStatus.HRD_SAVED_DELETE_SUCCESS);
     }
 
+
+
+    @Operation(
+            summary = "즐겨찾기 토글",
+            description = "해당 훈련과정이 즐겨찾기에 있으면 삭제하고, 없으면 추가합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "즐겨찾기 상태 변경 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "요청 데이터가 올바르지 않음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자"
+            )
+    })
     @PostMapping("/saved/toggle")
     public ResponseEntity<ApiResponse<SavedCourseDto>> toggle(@RequestBody @Valid SaveCourseRequest req) {
         return ApiResponse.success(
@@ -108,4 +205,5 @@ public class HrdController {
                 searchService.toggleSaved(req)
         );
     }
+
 }

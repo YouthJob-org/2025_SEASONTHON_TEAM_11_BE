@@ -45,7 +45,7 @@ public class HrdApiClient {
     public String getDetail(String trprId, String trprDegr, String torgId) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
-                        .path(detailUrl.replace("https://www.work24.go.kr", "")) // host 분리
+                        .path(detailUrl.replace("https://www.work24.go.kr", ""))
                         .scheme("https")
                         .host("www.work24.go.kr")
                         .queryParam("authKey", authKey)

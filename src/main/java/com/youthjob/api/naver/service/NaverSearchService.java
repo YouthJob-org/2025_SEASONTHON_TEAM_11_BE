@@ -49,7 +49,7 @@ public class NaverSearchService {
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = br.readLine()) != null) sb.append(line);
-                return sb.toString(); // 네이버의 JSON 문자열 그대로 반환
+                return sb.toString();
             } finally {
                 con.disconnect();
             }

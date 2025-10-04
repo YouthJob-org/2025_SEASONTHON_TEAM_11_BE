@@ -16,7 +16,7 @@ import java.time.Instant;
 @AllArgsConstructor @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 @Table(
-        name = "saved_course",
+        name = "saved_hrd_course",
         indexes = {
                 @Index(name = "idx_saved_course_user", columnList = "user_id"),
                 @Index(name = "idx_saved_course_trpr", columnList = "trprId,trprDegr")

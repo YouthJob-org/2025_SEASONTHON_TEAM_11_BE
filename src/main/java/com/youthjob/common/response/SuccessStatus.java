@@ -21,6 +21,19 @@ public enum SuccessStatus {
     ARTICLE_UPDATE_SUCCESS(HttpStatus.OK,"게시글 수정 성공"),
     MEMBER_SIGNUP_SUCCESS(HttpStatus.OK,"회원가입 성공"),
     AUTH_SUCCESS(HttpStatus.OK, "인증에 성공했습니다."),
+    NAVER_BLOG_SEARCH_SUCCESS(HttpStatus.OK, "네이버 블로그 검색 성공"),
+    // ===EMP 검색,저장 관련===
+    EMP_PROGRAM_SEARCH_SUCCESS(HttpStatus.OK,"EMP 검색 성공"),
+    EMP_PROGRAM_SAVE_SUCCESS(HttpStatus.OK,"EMP 저장 성공"),
+    EMP_PROGRAM_SAVED_LIST_SUCCESS(HttpStatus.OK,"EMP 저장 목록 조회 성공"),
+    EMP_PROGRAM_DELETE_SUCCESS(HttpStatus.OK,"EMP 저장 삭제 성공"),
+    EMP_PROGRAM_SAVED_TOGGLE_SUCCESS(HttpStatus.OK,"EMP 저장 토글 성공"),
+
+
+    HRD_SEARCH_SUCCESS(HttpStatus.OK,"HRD 검색 성공"),
+    HRD_DETAIL_SUCCESS(HttpStatus.OK,"HRD 상세정보 조회 성공"),
+    HRD_FULL_SUCCESS(HttpStatus.OK,"HRD 전체정보 조회 성공"),
+
 
     // === HRD/저장 과정 관련 ===
     HRD_COURSE_SEARCH_SUCCESS(HttpStatus.OK, "훈련과정 조회 성공"),

@@ -32,11 +32,9 @@ import static java.util.stream.Collectors.toList;
 @RequiredArgsConstructor
 public class EmpProgramService {
 
-    private final EmpProgramApiClient client; // (다른 곳에서 쓰면 유지, 아니면 제거 가능)
     private final SavedEmpProgramRepository savedRepo;   // 저장목록
     private final EmpProgramCatalogRepository catalogRepo; // ✔ 카탈로그(DB 검색용)
 
-    private static final XmlMapper XML = new XmlMapper();
 
     /** DB에서 검색해서 외부 API와 동일 DTO로 반환 */
     public EmpProgramResponseDto search(String pgmStdt, String topOrgCd, String orgCd,
@@ -145,4 +143,34 @@ public class EmpProgramService {
         }
         savedRepo.delete(e);
     }
+    @Transactional
+    public SavedEmpProgramDto toggle(Long memberId, SaveEmpProgramRequest req) {
+        String extKey = buildExtKey(req);
+        var existing = savedRepo.findByMemberIdAndExtKey(memberId, extKey);
+
+        if (existing.isPresent()) {
+            savedRepo.delete(existing.get());
+            return null; // 이미 있으면 삭제 → null 반환
+        }
+
+        var saved = savedRepo.save(
+                SavedEmpProgram.builder()
+                        .memberId(memberId)
+                        .extKey(extKey)
+                        .orgNm(req.getOrgNm())
+                        .pgmNm(req.getPgmNm())
+                        .pgmSubNm(req.getPgmSubNm())
+                        .pgmTarget(req.getPgmTarget())
+                        .pgmStdt(req.getPgmStdt())
+                        .pgmEndt(req.getPgmEndt())
+                        .openTimeClcd(req.getOpenTimeClcd())
+                        .openTime(req.getOpenTime())
+                        .operationTime(req.getOperationTime())
+                        .openPlcCont(req.getOpenPlcCont())
+                        .build()
+        );
+        return SavedEmpProgramDto.from(saved);
+    }
+
+
 }
