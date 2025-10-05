@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
-@Tag(name = "HRD", description = "채용 정보 검색, 저장 관련 API 입니다.")
+@Tag(name = "JobPosting", description = "채용 정보 검색, 저장 관련 API 입니다.")
 @RestController
 @RequestMapping("/api/jobs")
 @RequiredArgsConstructor
