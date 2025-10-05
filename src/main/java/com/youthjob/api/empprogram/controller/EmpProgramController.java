@@ -7,6 +7,9 @@ import com.youthjob.api.empprogram.service.EmpProgramService;
 import com.youthjob.common.response.ApiResponse;
 import com.youthjob.common.response.SuccessStatus;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -37,7 +40,18 @@ public class EmpProgramController {
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "검색 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode="401", description="인증 필요",
+                    content = @Content(mediaType="application/json",
+                            schema = @Schema(implementation = com.youthjob.common.response.ApiResponse.class),
+                            examples = @ExampleObject(
+                                    name="unauthorized",
+                                    value="""
+                {"status":401,"success":false,"message":"인증 필요","data":null}
+                """
+                            )
+                    )
+            )
     })
     @GetMapping(produces = "application/json")
     public ResponseEntity<ApiResponse<EmpProgramResponseDto>> search(
@@ -57,8 +71,18 @@ public class EmpProgramController {
     @Operation(summary = "고용훈련 프로그램 저장", description = "선택한 프로그램을 내 저장목록에 추가")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200", description="저장 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="400", description="잘못된 요청 데이터"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="401", description="인증 필요")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode="401", description="인증 필요",
+                    content = @Content(mediaType="application/json",
+                            schema = @Schema(implementation = com.youthjob.common.response.ApiResponse.class),
+                            examples = @ExampleObject(
+                                    name="unauthorized",
+                                    value="""
+                {"status":401,"success":false,"message":"인증 필요","data":null}
+                """
+                            )
+                    )
+            )
     })
     @PostMapping(value = "/saved", consumes = "application/json", produces = "application/json")
     public ResponseEntity<ApiResponse<SavedEmpProgramDto>> save(
@@ -75,7 +99,18 @@ public class EmpProgramController {
     @Operation(summary = "저장목록 조회", description = "내가 저장한 고용훈련 프로그램 목록 조회")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200", description="조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="401", description="인증 필요")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode="401", description="인증 필요",
+                    content = @Content(mediaType="application/json",
+                            schema = @Schema(implementation = com.youthjob.common.response.ApiResponse.class),
+                            examples = @ExampleObject(
+                                    name="unauthorized",
+                                    value="""
+                {"status":401,"success":false,"message":"인증 필요","data":null}
+                """
+                            )
+                    )
+            )
     })
     @GetMapping(value = "/saved", produces = "application/json")
     public ResponseEntity<ApiResponse<List<SavedEmpProgramDto>>> list(
@@ -91,8 +126,18 @@ public class EmpProgramController {
     @Operation(summary = "저장항목 삭제", description = "저장 목록에서 항목 삭제")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200", description="삭제 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="401", description="인증 필요"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="404", description="항목 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode="401", description="인증 필요",
+                    content = @Content(mediaType="application/json",
+                            schema = @Schema(implementation = com.youthjob.common.response.ApiResponse.class),
+                            examples = @ExampleObject(
+                                    name="unauthorized",
+                                    value="""
+                {"status":401,"success":false,"message":"인증 필요","data":null}
+                """
+                            )
+                    )
+            ),
     })
     @DeleteMapping("/saved/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(
@@ -106,8 +151,18 @@ public class EmpProgramController {
     @Operation(summary = "저장항목 토글", description = "저장 목록에서 항목 삭제 OR 저장")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="200", description="토글 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="401", description="인증 필요"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode="404", description="항목 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode="401", description="인증 필요",
+                    content = @Content(mediaType="application/json",
+                            schema = @Schema(implementation = com.youthjob.common.response.ApiResponse.class),
+                            examples = @ExampleObject(
+                                    name="unauthorized",
+                                    value="""
+                {"status":401,"success":false,"message":"인증 필요","data":null}
+                """
+                            )
+                    )
+            ),
     })
     @PostMapping("/saved/toggle")
     public ResponseEntity<ApiResponse<SavedEmpProgramDto>> toggle(

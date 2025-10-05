@@ -62,6 +62,16 @@ public class SecurityConfig {
                                 "/actuator/prometheus",
                                 "/api/echo"
                                 ).permitAll()
+                        .requestMatchers(
+                                // Swagger UI
+                                "/v3/api-docs/**",
+                                "/api/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/api/swagger-ui/**",
+                                "/swagger-resources/**",
+                                "/api/swagger-resources/**",
+                                "/api/webjars/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

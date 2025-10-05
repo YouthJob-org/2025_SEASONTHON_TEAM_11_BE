@@ -5,6 +5,9 @@ import com.youthjob.api.hrd.service.HrdSearchService;
 import com.youthjob.common.response.ApiResponse;
 import com.youthjob.common.response.SuccessStatus;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -28,7 +31,19 @@ public class HrdController {
             description = "지역, 훈련 분야를 기준으로 검색 결과 반환"
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "검색 성공")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "검색 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode="401", description="인증 필요",
+                    content = @Content(mediaType="application/json",
+                            schema = @Schema(implementation = com.youthjob.common.response.ApiResponse.class),
+                            examples = @ExampleObject(
+                                    name="unauthorized",
+                                    value="""
+                {"status":401,"success":false,"message":"인증 필요","data":null}
+                """
+                            )
+                    )
+            )
     })
     @GetMapping("/courses")
     public ResponseEntity<ApiResponse<HrdSearchService.SliceResponse<HrdCourseDto>>> search(
@@ -53,7 +68,19 @@ public class HrdController {
             description = "훈련, 훈련기관 상세정보 반환"
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상세정보 조회 성공")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상세정보 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode="401", description="인증 필요",
+                    content = @Content(mediaType="application/json",
+                            schema = @Schema(implementation = com.youthjob.common.response.ApiResponse.class),
+                            examples = @ExampleObject(
+                                    name="unauthorized",
+                                    value="""
+                {"status":401,"success":false,"message":"인증 필요","data":null}
+                """
+                            )
+                    )
+            )
     })
     @GetMapping("/courses/{trprId}/{trprDegr}")
     public ResponseEntity<ApiResponse<HrdCourseDetailDto>> detail(
@@ -69,11 +96,30 @@ public class HrdController {
     }
 
 
+    @Operation(
+            summary = "훈련기관 통계정보",
+            description = "훈련기관 통계정보 반환"
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "통계정보 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode="401", description="인증 필요",
+                    content = @Content(mediaType="application/json",
+                            schema = @Schema(implementation = com.youthjob.common.response.ApiResponse.class),
+                            examples = @ExampleObject(
+                                    name="unauthorized",
+                                    value="""
+                {"status":401,"success":false,"message":"인증 필요","data":null}
+                """
+                            )
+                    )
+            )
+    })
     @GetMapping("/courses/{trprId}/stats")
     public ResponseEntity<List<HrdCourseStatDto>> stats(
             @PathVariable String trprId,
             @RequestParam String torgId,
-            @RequestParam(required = false) String trprDegr // 없으면 서비스에서 전체/최신 등 정책 처리
+            @RequestParam(required = false) String trprDegr
     ) {
         return ResponseEntity.ok(
                 searchService.getStats(trprId, torgId, trprDegr)
@@ -113,8 +159,16 @@ public class HrdController {
                     description = "저장된 목록 조회 성공"
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "인증되지 않은 사용자"
+                    responseCode="401", description="인증 필요",
+                    content = @Content(mediaType="application/json",
+                            schema = @Schema(implementation = com.youthjob.common.response.ApiResponse.class),
+                            examples = @ExampleObject(
+                                    name="unauthorized",
+                                    value="""
+                {"status":401,"success":false,"message":"인증 필요","data":null}
+                """
+                            )
+                    )
             )
     })
     @GetMapping("/saved")
@@ -137,12 +191,16 @@ public class HrdController {
                     description = "즐겨찾기 추가 성공"
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "요청 데이터가 올바르지 않음"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "인증되지 않은 사용자"
+                    responseCode="401", description="인증 필요",
+                    content = @Content(mediaType="application/json",
+                            schema = @Schema(implementation = com.youthjob.common.response.ApiResponse.class),
+                            examples = @ExampleObject(
+                                    name="unauthorized",
+                                    value="""
+                {"status":401,"success":false,"message":"인증 필요","data":null}
+                """
+                            )
+                    )
             )
     })
     @PostMapping("/saved")
@@ -164,12 +222,16 @@ public class HrdController {
                     description = "즐겨찾기 삭제 성공"
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "인증되지 않은 사용자"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "삭제할 항목을 찾을 수 없음"
+                    responseCode="401", description="인증 필요",
+                    content = @Content(mediaType="application/json",
+                            schema = @Schema(implementation = com.youthjob.common.response.ApiResponse.class),
+                            examples = @ExampleObject(
+                                    name="unauthorized",
+                                    value="""
+                {"status":401,"success":false,"message":"인증 필요","data":null}
+                """
+                            )
+                    )
             )
     })
     @DeleteMapping("/saved/{id}")
@@ -190,12 +252,16 @@ public class HrdController {
                     description = "즐겨찾기 상태 변경 성공"
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "요청 데이터가 올바르지 않음"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "인증되지 않은 사용자"
+                    responseCode="401", description="인증 필요",
+                    content = @Content(mediaType="application/json",
+                            schema = @Schema(implementation = com.youthjob.common.response.ApiResponse.class),
+                            examples = @ExampleObject(
+                                    name="unauthorized",
+                                    value="""
+                {"status":401,"success":false,"message":"인증 필요","data":null}
+                """
+                            )
+                    )
             )
     })
     @PostMapping("/saved/toggle")
