@@ -41,30 +41,6 @@ public class HrdController {
         );
     }
 
-    /** 상세(기관/훈련과정 기본정보): DB(HrdCourseFull) 우선 → 없으면 API 호출 후 업서트 */
-    @GetMapping("/courses/{trprId}/{trprDegr}")
-    public ResponseEntity<HrdCourseDetailDto> detail(
-            @PathVariable String trprId,
-            @PathVariable String trprDegr,
-            @RequestParam String torgId
-    ) {
-        return ResponseEntity.ok(
-                searchService.getDetail(trprId, trprDegr, torgId)
-        );
-    }
-
-    /** 통계(수료/취업률 등): DB(HrdCourseFull.stats) 우선 → 없으면 API */
-    @GetMapping("/courses/{trprId}/stats")
-    public ResponseEntity<List<HrdCourseStatDto>> stats(
-            @PathVariable String trprId,
-            @RequestParam String torgId,
-            @RequestParam(required = false) String trprDegr // 없으면 서비스에서 전체/최신 등 정책 처리
-    ) {
-        return ResponseEntity.ok(
-                searchService.getStats(trprId, torgId, trprDegr)
-        );
-    }
-
     /** 상세+통계 묶음: DB 우선 → 없으면 API 호출 후 업서트 */
     @GetMapping("/courses/{trprId}/{trprDegr}/full")
     public ResponseEntity<HrdCourseFullDto> full(
@@ -77,7 +53,7 @@ public class HrdController {
         );
     }
 
-    /* ===== 저장 목록/추가/삭제/토글 (기존 프론트 응답 래핑 그대로 유지) ===== */
+    /* ===== 저장 목록/추가/삭제/토글 ===== */
 
     @GetMapping("/saved")
     public ResponseEntity<ApiResponse<List<SavedCourseDto>>> listSaved() {

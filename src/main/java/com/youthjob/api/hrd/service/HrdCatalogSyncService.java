@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture;
 public class HrdCatalogSyncService {
 
     @Autowired
-    private ThreadPoolTaskExecutor hrdExecutor; // @Bean(name="hrdExecutor") 로 등록된 풀
+    private ThreadPoolTaskExecutor hrdExecutor;
 
     private final HrdApiClient client;
     private final HrdCourseCatalogRepository repo;
@@ -44,16 +44,16 @@ public class HrdCatalogSyncService {
     @Transactional
     public int harvestMonthsAhead(int months, String area1, String ncs1) {
         LocalDate today = LocalDate.now(KST);
-        LocalDate end   = today.plusMonths(months);
+        LocalDate end   = today.plusMonths(months); //종료일을 오늘부터 6개월뒤로 설정
 
         int totalUpserts = 0;
         LocalDate cursor = today;
         while (!cursor.isAfter(end)) {
             LocalDate winStart = cursor;
-            LocalDate winEnd   = cursor.plusMonths(1).minusDays(1);
-            if (winEnd.isAfter(end)) winEnd = end;
+            LocalDate winEnd   = cursor.plusMonths(1).minusDays(1); //한달씩 증가
+            if (winEnd.isAfter(end)) winEnd = end; //종료일을 넘어가지 않도록 설정
 
-            totalUpserts += harvestWindow(winStart, winEnd, area1, ncs1);
+            totalUpserts += harvestWindow(winStart, winEnd, area1, ncs1); // HRD API 호출 및 DB 저장로직 수행
             cursor = cursor.plusMonths(1);
         }
         return totalUpserts;

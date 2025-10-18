@@ -26,7 +26,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static java.lang.Integer.max;
 
 @Slf4j
 @Service
@@ -106,23 +105,9 @@ public class HrdSearchService {
 
     /* ======================= 상세/통계 - DB 우선 ======================= */
 
-    /** 상세: DB 우선, 없으면 API 호출 */
-    public HrdCourseDetailDto getDetail(String trprId, String trprDegr, String torgId) {
-        var found = fullRepo.findByTrprIdAndTrprDegrAndTorgId(trprId, trprDegr, torgId);
-        if (found.isPresent()) return toDetailDto(found.get());
-        return fetchDetailFromApi(trprId, trprDegr, torgId);
-    }
 
-    /** 통계: (회차 지정 시) DB 우선, 없으면 API 호출 */
-    public List<HrdCourseStatDto> getStats(String trprId, String torgId, String trprDegrOrNull) {
-        if (trprDegrOrNull != null && !trprDegrOrNull.isBlank()) {
-            var found = fullRepo.findByTrprIdAndTrprDegrAndTorgId(trprId, trprDegrOrNull, torgId);
-            if (found.isPresent() && found.get().getStats() != null) {
-                return found.get().getStats();
-            }
-        }
-        return fetchStatsFromApi(trprId, torgId, trprDegrOrNull);
-    }
+
+
 
     /** 상세+통계 묶음: DB 우선 → 없으면 API 호출 후 업서트하고 반환 */
     @Transactional

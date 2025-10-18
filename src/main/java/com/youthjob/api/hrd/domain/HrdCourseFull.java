@@ -28,7 +28,7 @@ public class HrdCourseFull {
     @Column(nullable=false, length=20) private String trprDegr;
     @Column(nullable=false, length=50) private String torgId;
 
-    // detail 주요 필드(조회가 잦은 것만 칼럼화)
+
     private String trprNm;
     private String ncsCd;
     private String ncsNm;
@@ -51,16 +51,16 @@ public class HrdCourseFull {
     private String pFileName;
     private String torgParGrad;
 
-    // stats JSON
+
     @Lob
     @Column(columnDefinition = "LONGTEXT")
     @Convert(converter = StatsJsonConverter.class)
     private List<HrdCourseStatDto> stats;
 
-    // 동기화 시각
+
     private Instant savedAt;
 
-    /* 편의 메서드: DTO를 엔티티에 반영 */
+
     public void applyDetail(HrdCourseDetailDto d) {
         this.trprNm = d.trprNm();
         this.ncsCd  = d.ncsCd();
