@@ -26,7 +26,7 @@ public class HrdController {
 
     /** 목록 조회: DB 카탈로그에서 페이징/정렬/필터 */
     @GetMapping("/courses")
-    public ResponseEntity<List<HrdCourseDto>> search(
+    public ResponseEntity<HrdSearchService.SliceResponse<HrdCourseDto>> search(
             @RequestParam String startDt,
             @RequestParam String endDt,
             @RequestParam(defaultValue = "1") int page,

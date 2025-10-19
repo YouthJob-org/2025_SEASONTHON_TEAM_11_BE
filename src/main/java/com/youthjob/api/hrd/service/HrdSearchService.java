@@ -13,13 +13,16 @@ import com.youthjob.api.hrd.dto.*;
 import com.youthjob.api.hrd.repository.HrdCourseCatalogRepository;
 import com.youthjob.api.hrd.repository.HrdCourseFullRepository;
 import com.youthjob.api.hrd.repository.SavedCourseRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -41,67 +44,50 @@ public class HrdSearchService {
     private final SavedCourseRepository savedCourseRepository;
     private final UserRepository userRepository;
 
+    public record SliceResponse<T>(List<T> content, boolean hasNext) {}
+
     /* ======================= 검색(카탈로그) - DB ======================= */
-    public List<HrdCourseDto> search(String startDt, String endDt, int page, int size,
+    @Transactional(readOnly = true)
+    public SliceResponse<HrdCourseDto> search(String startDt, String endDt, int page, int size,
                                      String area1, String ncs1, String sort, String sortCol) {
         var fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
         var s = LocalDate.parse(startDt, fmt);
         var e = LocalDate.parse(endDt, fmt);
 
-        String sortProp = switch (sortCol) {
-            case "2" -> "traStartDate";
-            case "3" -> "traEndDate";
-            default  -> "traStartDate";
-        };
-        var direction = "DESC".equalsIgnoreCase(sort)
-                ? org.springframework.data.domain.Sort.Direction.DESC
-                : org.springframework.data.domain.Sort.Direction.ASC;
+        var sortProp = "3".equals(sortCol) ? "traEndDate" : "traStartDate";
+        var direction = "DESC".equalsIgnoreCase(sort) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        var pageable = PageRequest.of(Math.max(page - 1, 0), size, Sort.by(direction, sortProp));
 
-        var pageable = org.springframework.data.domain.PageRequest.of(
-                Math.max(page - 1, 0), size, org.springframework.data.domain.Sort.by(direction, sortProp));
+        Slice<HrdCourseRow> slice = (area1 != null && !area1.isBlank())
+                ? catalogRepo.findSliceByArea1(s, e, area1, blankToNull(ncs1), pageable)
+                : catalogRepo.findSliceNoArea1(s, e, blankToNull(ncs1), pageable);
 
-        Specification<HrdCourseCatalog> spec = Specification.allOf(
-                betweenDates(s, e),
-                (area1 == null || area1.isBlank()) ? null : eqArea(area1),
-                (ncs1  == null || ncs1.isBlank())  ? null : startsWithNcs(ncs1)
-        );
 
-        var slice = catalogRepo.findAll(spec, pageable);
-        return slice.stream().map(c ->
-                HrdCourseDto.builder()
-                        .title(c.getTitle())
-                        .subTitle(c.getSubTitle())
-                        .address(c.getAddress())
-                        .telNo(c.getTelNo())
-                        .traStartDate(c.getTraStartDate().format(fmt))
-                        .traEndDate(c.getTraEndDate().format(fmt))
-                        .trainTarget(c.getTrainTarget())
-                        .trainTargetCd(c.getTrainTargetCd())
-                        .ncsCd(c.getNcsCd())
-                        .trprId(c.getTrprId())
-                        .trprDegr(c.getTrprDegr())
-                        .courseMan(c.getCourseMan())
-                        .realMan(c.getRealMan())
-                        .yardMan(c.getYardMan())
-                        .titleLink(c.getTitleLink())
-                        .subTitleLink(c.getSubTitleLink())
-                        .torgId(c.getTorgId())
-                        .build()
+        var list = slice.stream().map(r -> HrdCourseDto.builder()
+                .title(r.getTitle())
+                .subTitle(r.getSubTitle())
+                .address(r.getAddress())
+                .telNo(r.getTelNo())
+                .traStartDate(r.getTraStartDate().format(fmt))
+                .traEndDate(r.getTraEndDate().format(fmt))
+                .trainTarget(r.getTrainTarget())
+                .trainTargetCd(r.getTrainTargetCd())
+                .ncsCd(r.getNcsCd())
+                .trprId(r.getTrprId())
+                .trprDegr(r.getTrprDegr())
+                .courseMan(r.getCourseMan())
+                .realMan(r.getRealMan())
+                .yardMan(r.getYardMan())
+                .titleLink(r.getTitleLink())
+                .subTitleLink(r.getSubTitleLink())
+                .torgId(r.getTorgId())
+                .build()
         ).toList();
+        return new SliceResponse<>(list, slice.hasNext());
     }
 
-    private Specification<HrdCourseCatalog> betweenDates(LocalDate s, LocalDate e) {
-        return (root, q, cb) -> cb.and(
-                cb.greaterThanOrEqualTo(root.get("traEndDate"), s),
-                cb.lessThanOrEqualTo(root.get("traStartDate"), e)
-        );
-    }
-    private Specification<HrdCourseCatalog> eqArea(String area1) {
-        return (root, q, cb) -> cb.equal(root.get("area1"), area1);
-    }
-    private Specification<HrdCourseCatalog> startsWithNcs(String ncs1) {
-        return (root, q, cb) -> cb.like(root.get("ncsCd"), ncs1 + "%");
-    }
+    private String blankToNull(String s){ return (s==null||s.isBlank())?null:s; }
+
 
     /* ======================= 상세/통계 - DB 우선 ======================= */
 
