@@ -45,4 +45,22 @@ public interface SavedCourseRepository extends JpaRepository<SavedCourse, Long> 
     """)
     List<SavedCourseView> findAllViewsByUser(@Param("user") User user);
 
+    @Query("""
+      select new com.youthjob.api.hrd.dto.SavedCourseView(
+        sc.id, sc.trprId, sc.trprDegr,
+        coalesce(hcc.torgId, sc.torgId),
+        hcc.title, hcc.subTitle, hcc.address, hcc.telNo,
+        hcc.traStartDate, hcc.traEndDate,
+        hcc.trainTarget, hcc.trainTargetCd, hcc.ncsCd,
+        hcc.courseMan, hcc.realMan, hcc.yardMan,
+        hcc.titleLink, hcc.subTitleLink,
+        sc.createdAt
+      )
+      from SavedCourse sc
+      left join HrdCourseCatalog hcc
+        on hcc.trprId = sc.trprId and hcc.trprDegr = sc.trprDegr
+      where sc.user = :user
+      order by sc.createdAt desc
+    """)
+    Page<SavedCourseView> findAllViewsByUser(@Param("user") User user, Pageable pageable);
 }

@@ -2,6 +2,7 @@ package com.youthjob.api.mypage.controller;
 
 import com.youthjob.api.empprogram.dto.SavedEmpProgramDto;
 import com.youthjob.api.hrd.dto.SavedCourseDto;
+import com.youthjob.api.hrd.dto.SavedCourseView;
 import com.youthjob.api.mypage.dto.*;
 import com.youthjob.api.mypage.service.MyPageService;
 import com.youthjob.api.youthpolicy.dto.SavedPolicyDto;
@@ -45,7 +46,7 @@ public class MyPageController {
 
     /** 관심 - 내일배움카드 */
     @GetMapping("/saved-courses")
-    public ResponseEntity<PageResult<SavedCourseDto>> savedCourses(
+    public ResponseEntity<PageResult<SavedCourseView>> savedCourses(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(service.savedCourses(page, size));
