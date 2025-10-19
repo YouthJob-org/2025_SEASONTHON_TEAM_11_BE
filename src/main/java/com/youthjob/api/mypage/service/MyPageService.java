@@ -5,6 +5,7 @@ import com.youthjob.api.auth.repository.UserRepository;
 import com.youthjob.api.empprogram.dto.SavedEmpProgramDto;
 import com.youthjob.api.empprogram.repository.SavedEmpProgramRepository;
 import com.youthjob.api.hrd.dto.SavedCourseDto;
+import com.youthjob.api.hrd.dto.SavedCourseView;
 import com.youthjob.api.hrd.repository.SavedCourseRepository;
 import com.youthjob.api.mypage.dto.*;
 import com.youthjob.api.youthpolicy.dto.SavedPolicyDto;
@@ -71,17 +72,20 @@ public class MyPageService {
     }
 
     /** 내일배움카드(관심) 페이징 */
-    public PageResult<SavedCourseDto> savedCourses(int page, int size) {
+    public PageResult<SavedCourseView> savedCourses(int page, int size) {
         User me = currentUser();
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100),
                 Sort.by(Sort.Direction.DESC, "createdAt"));
-        var p = savedCourseRepository.findByUser(me, pageable).map(SavedCourseDto::from);
-        return PageResult.<SavedCourseDto>builder()
+
+        Page<SavedCourseView> p = savedCourseRepository.findAllViewsByUser(me, pageable);
+
+        return PageResult.<SavedCourseView>builder()
                 .page(p.getNumber()).size(p.getSize())
                 .totalElements(p.getTotalElements()).totalPages(p.getTotalPages())
                 .items(p.getContent())
                 .build();
     }
+
 
     /** 청년정책(관심) 페이징 */
     public PageResult<SavedPolicyDto> savedPolicies(int page, int size) {
