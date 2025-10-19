@@ -117,41 +117,27 @@ public class HrdSearchService {
         User me = getCurrentUser();
 
         if (savedCourseRepository.existsByUserAndTrprIdAndTrprDegr(me, req.trprId(), req.trprDegr())) {
-            return savedCourseRepository.findAllByUserOrderByCreatedAtDesc(me).stream()
-                    .filter(c -> c.getTrprId().equals(req.trprId()) && c.getTrprDegr().equals(req.trprDegr()))
-                    .findFirst()
+            return savedCourseRepository.findTopByUserAndTrprIdAndTrprDegrOrderByCreatedAtDesc(me, req.trprId(), req.trprDegr())
                     .map(SavedCourseDto::from)
-                    .orElseThrow(() -> new IllegalStateException("이미 저장된 항목을 찾을 수 없습니다."));
+                    .orElseThrow();
         }
 
         var saved = SavedCourse.builder()
                 .user(me)
                 .trprId(req.trprId())
                 .trprDegr(req.trprDegr())
-                .title(req.title())
-                .subTitle(req.subTitle())
-                .address(req.address())
-                .telNo(req.telNo())
-                .traStartDate(req.traStartDate())
-                .traEndDate(req.traEndDate())
-                .trainTarget(req.trainTarget())
-                .trainTargetCd(req.trainTargetCd())
-                .ncsCd(req.ncsCd())
-                .courseMan(req.courseMan())
-                .realMan(req.realMan())
-                .yardMan(req.yardMan())
-                .titleLink(req.titleLink())
-                .subTitleLink(req.subTitleLink())
+                .torgId(req.torgId())
                 .build();
 
         return SavedCourseDto.from(savedCourseRepository.save(saved));
     }
 
-    public List<SavedCourseDto> listSaved() {
+    public List<SavedCourseView> listSaved() {
         User me = getCurrentUser();
-        return savedCourseRepository.findAllByUserOrderByCreatedAtDesc(me)
-                .stream().map(SavedCourseDto::from).toList();
+        var rows = savedCourseRepository.findAllViewsByUser(me);
+        return rows;
     }
+
 
     @Transactional
     public void deleteSaved(Long id) {
@@ -165,7 +151,7 @@ public class HrdSearchService {
     public SavedCourseDto toggleSaved(SaveCourseRequest req) {
         User me = getCurrentUser();
         var exists = savedCourseRepository.existsByUserAndTrprIdAndTrprDegr(me, req.trprId(), req.trprDegr());
-        if (exists) {
+        if (exists) { //이미 저장된 교육이면 삭제
             var target = savedCourseRepository.findAllByUserOrderByCreatedAtDesc(me).stream()
                     .filter(c -> c.getTrprId().equals(req.trprId()) && c.getTrprDegr().equals(req.trprDegr()))
                     .findFirst().orElseThrow();

@@ -7,7 +7,7 @@ import lombok.Value;
 @Builder
 public class HrdCourseStatDto {
     String trprId;        // 훈련과정ID
-    String trprDegr;      // 회차(옵션)
+    String trprDegr;      // 회차
     String trprNm;        // 과정명
     String instIno;       // 훈련기관 코드
 

@@ -11,12 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * HRD 검색/상세/통계/저장 API
- * - 목록(search): DB(HrdCourseCatalog)에서 조회
- * - 상세(detail), 통계(stats), 풀(full): 서비스가 DB(HrdCourseFull) 우선 조회 → 없으면 API 호출/업서트
- *   (프론트 파라미터/응답 형식은 그대로 유지)
- */
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/hrd")
@@ -53,10 +48,10 @@ public class HrdController {
         );
     }
 
-    /* ===== 저장 목록/추가/삭제/토글 ===== */
+
 
     @GetMapping("/saved")
-    public ResponseEntity<ApiResponse<List<SavedCourseDto>>> listSaved() {
+    public ResponseEntity<ApiResponse<List<SavedCourseView>>> listSaved() {
         return ApiResponse.success(
                 SuccessStatus.HRD_SAVED_LIST_SUCCESS,
                 searchService.listSaved()
