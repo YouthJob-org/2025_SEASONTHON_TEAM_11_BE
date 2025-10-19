@@ -29,7 +29,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static java.lang.Integer.max;
 
 @Slf4j
 @Service
@@ -92,23 +91,9 @@ public class HrdSearchService {
 
     /* ======================= 상세/통계 - DB 우선 ======================= */
 
-    /** 상세: DB 우선, 없으면 API 호출 */
-    public HrdCourseDetailDto getDetail(String trprId, String trprDegr, String torgId) {
-        var found = fullRepo.findByTrprIdAndTrprDegrAndTorgId(trprId, trprDegr, torgId);
-        if (found.isPresent()) return toDetailDto(found.get());
-        return fetchDetailFromApi(trprId, trprDegr, torgId);
-    }
 
-    /** 통계: (회차 지정 시) DB 우선, 없으면 API 호출 */
-    public List<HrdCourseStatDto> getStats(String trprId, String torgId, String trprDegrOrNull) {
-        if (trprDegrOrNull != null && !trprDegrOrNull.isBlank()) {
-            var found = fullRepo.findByTrprIdAndTrprDegrAndTorgId(trprId, trprDegrOrNull, torgId);
-            if (found.isPresent() && found.get().getStats() != null) {
-                return found.get().getStats();
-            }
-        }
-        return fetchStatsFromApi(trprId, torgId, trprDegrOrNull);
-    }
+
+
 
     /** 상세+통계 묶음: DB 우선 → 없으면 API 호출 후 업서트하고 반환 */
     @Transactional
@@ -132,41 +117,27 @@ public class HrdSearchService {
         User me = getCurrentUser();
 
         if (savedCourseRepository.existsByUserAndTrprIdAndTrprDegr(me, req.trprId(), req.trprDegr())) {
-            return savedCourseRepository.findAllByUserOrderByCreatedAtDesc(me).stream()
-                    .filter(c -> c.getTrprId().equals(req.trprId()) && c.getTrprDegr().equals(req.trprDegr()))
-                    .findFirst()
+            return savedCourseRepository.findTopByUserAndTrprIdAndTrprDegrOrderByCreatedAtDesc(me, req.trprId(), req.trprDegr())
                     .map(SavedCourseDto::from)
-                    .orElseThrow(() -> new IllegalStateException("이미 저장된 항목을 찾을 수 없습니다."));
+                    .orElseThrow();
         }
 
         var saved = SavedCourse.builder()
                 .user(me)
                 .trprId(req.trprId())
                 .trprDegr(req.trprDegr())
-                .title(req.title())
-                .subTitle(req.subTitle())
-                .address(req.address())
-                .telNo(req.telNo())
-                .traStartDate(req.traStartDate())
-                .traEndDate(req.traEndDate())
-                .trainTarget(req.trainTarget())
-                .trainTargetCd(req.trainTargetCd())
-                .ncsCd(req.ncsCd())
-                .courseMan(req.courseMan())
-                .realMan(req.realMan())
-                .yardMan(req.yardMan())
-                .titleLink(req.titleLink())
-                .subTitleLink(req.subTitleLink())
+                .torgId(req.torgId())
                 .build();
 
         return SavedCourseDto.from(savedCourseRepository.save(saved));
     }
 
-    public List<SavedCourseDto> listSaved() {
+    public List<SavedCourseView> listSaved() {
         User me = getCurrentUser();
-        return savedCourseRepository.findAllByUserOrderByCreatedAtDesc(me)
-                .stream().map(SavedCourseDto::from).toList();
+        var rows = savedCourseRepository.findAllViewsByUser(me);
+        return rows;
     }
+
 
     @Transactional
     public void deleteSaved(Long id) {
@@ -180,7 +151,7 @@ public class HrdSearchService {
     public SavedCourseDto toggleSaved(SaveCourseRequest req) {
         User me = getCurrentUser();
         var exists = savedCourseRepository.existsByUserAndTrprIdAndTrprDegr(me, req.trprId(), req.trprDegr());
-        if (exists) {
+        if (exists) { //이미 저장된 교육이면 삭제
             var target = savedCourseRepository.findAllByUserOrderByCreatedAtDesc(me).stream()
                     .filter(c -> c.getTrprId().equals(req.trprId()) && c.getTrprDegr().equals(req.trprDegr()))
                     .findFirst().orElseThrow();

@@ -36,9 +36,9 @@ public class HrdCourseCatalog {
     @Column(nullable=false) private LocalDate traStartDate;
     @Column(nullable=false) private LocalDate traEndDate;
 
-    // 필터용(선택)
-    @Column(length=10) private String area1;   // srchTraArea1 (예: 11, 26 등)
-    @Column(length=10) private String ncsCd;   // 대분류 코드만 저장해도 OK
+    // 필터용
+    @Column(length=10) private String area1;
+    @Column(length=10) private String ncsCd;
 
     // 화면 메타
     @Column(length=300) private String title;
