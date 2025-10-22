@@ -243,8 +243,7 @@ public class Work24CrawlerService {
         return -1;
     }
 
-    // ── 목록에서 상세 링크 + 힌트 뽑기
-    // 목록에서 상세 링크 + 힌트 뽑기 (교체)
+    // 목록에서 상세 링크 + 힌트 뽑기
     private List<Link> extractDetailLinks(Document doc) {
         LinkedHashSet<Link> out = new LinkedHashSet<>();
 
@@ -533,10 +532,10 @@ public class Work24CrawlerService {
             if (s != null && !s.text().isBlank()) c = s.text().trim();  // ex) (주)대유산업
         }
 
-        // ③ 기업정보 탭의 인라인 라벨( <em class="tit">기업명</em>… )
+        // 기업정보 탭의 인라인 라벨( <em class="tit">기업명</em>… )
         if (isBlank(c)) c = pickInlineByEm(d, RX_COMPANY);
 
-        // ④ 나머지 기존 폴백 유지 …
+        // 나머지 기존 폴백 유지 …
         if (isBlank(c)) c = pickFirstCss(d, ".company", ".cpn", ".employer", ".biz-name", ".co_name");
         if (isBlank(c)) {
             String pageTitle = d.title();

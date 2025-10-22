@@ -36,19 +36,18 @@ public class EmpProgramCatalogService {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final DateTimeFormatter F = DateTimeFormatter.ofPattern("yyyyMMdd");
 
-    /** 운영에서 바꾸기 쉽도록 프로퍼티로 분리 (없으면 기본 6개 지방청 코드 사용) */
     @Value("#{'${emp.centers.topOrgCds:12010,13000,14010,15000,16000,17000}'.split(',')}")
     private List<String> topOrgCds;
 
-    /** 오늘(한국시간) yyyymmdd */
+    //오늘 시간
     public static String todayYyyymmdd() {
         return LocalDate.now(KST).format(F);
     }
 
-    /** yyyymmdd -> LocalDate */
+    //yyyymmdd -> LocalDate
     private static LocalDate parseDay(String yyyymmdd) { return LocalDate.parse(yyyymmdd, F); }
 
-    /** extKey 규칙(저장목록과 동일한 구성으로 충돌 최소화) */
+
     static String buildExtKey(EmpProgramItemDto r) {
         return String.join("|",
                 nv(r.getOrgNm()), nv(r.getPgmNm()), nv(r.getPgmSubNm()),
@@ -67,16 +66,16 @@ public class EmpProgramCatalogService {
         int display = (first.getDisplay() == null || first.getDisplay() < 1) ? 100 : first.getDisplay();
         int lastPage = Math.min(1000, (int) ceil(total / (double) display));
 
-        totalInserted += upsert(first.getPrograms()); // ← 코드컨텍스트 없음(fallback)
+        totalInserted += upsert(first.getPrograms());
 
         for (int page = 2; page <= lastPage; page++) {
             EmpProgramResponseDto pageDto = fetch(yyyymmdd, page, display);
-            totalInserted += upsert(pageDto.getPrograms()); // ← 코드컨텍스트 없음(fallback)
+            totalInserted += upsert(pageDto.getPrograms());
         }
         return totalInserted;
     }
 
-    /** 날짜 + (지방청/센터) 분할 수집 — 권장 경로 */
+    /** 날짜 + (지방청/센터) 분할 수집 **/
     @Transactional
     public int harvestAllForDayByOrg(String yyyymmdd, String topOrgCd, String orgCd) {
         int totalInserted = 0;
@@ -94,17 +93,17 @@ public class EmpProgramCatalogService {
         return totalInserted;
     }
 
-    // EmpProgramCatalogService.java
     @Value("#{${emp.centers.byTop:{}}}")
     private java.util.Map<String, String> centersByTop; // "CSV 문자열" 맵
 
     @Transactional
     public int harvestAllForDayPartitioned(String yyyymmdd) {
         List<String> topOrgCds = centersProps.topOrgCdList();
-        Map<String, String> byTop = centersProps.getByTop();   // 절대 null 아님(기본 emptyMap)
+        Map<String, String> byTop = centersProps.getByTop(); //application.yml의 노동청 ID 리스트 가지고옴
 
         if (topOrgCds.isEmpty()) {
             log.warn("topOrgCds is empty — fallback to default 6 tops");
+            //각지역 노동청 코드 12010:서울, 13000:부산, 14010:대구, 15000:중부지방, 16000:광주, 17000:대전
             topOrgCds = List.of("12010","13000","14010","15000","16000","17000");
         }
 
@@ -118,7 +117,7 @@ public class EmpProgramCatalogService {
                 for (String org : csv.split(",")) {
                     String orgTrim = org.trim();
                     if (!orgTrim.isEmpty()) {
-                        inserted += harvestAllForDayByOrg(yyyymmdd, top, orgTrim);
+                        inserted += harvestAllForDayByOrg(yyyymmdd, top, orgTrim); //날짜, 상위 노동청ID, 하위 노동청ID로 데이터 수집
                     }
                 }
             }
@@ -146,7 +145,7 @@ public class EmpProgramCatalogService {
         return repo.deleteAllEndedBefore(todayYyyymmdd);
     }
 
-    // 매주 일요일 0시(자정)에 실행
+    // 매주 일요일 0시에 실행
     @Scheduled(cron = "0 0 0 * * SUN", zone = "Asia/Seoul")
     @Transactional
     public void weeklyRefresh() {
@@ -156,12 +155,13 @@ public class EmpProgramCatalogService {
     }
 
 
-    /** 기존 호출부 호환용(3파라미터) */
+    /** 기존 호출부 호환용 */
     private EmpProgramResponseDto fetch(String yyyymmdd, int startPage, int display) {
         return fetch(yyyymmdd, null, null, startPage, display);
     }
 
-    /** 실제 호출(5파라미터) */
+
+    //OPEN API호출 후 XML데이터 파싱
     private EmpProgramResponseDto fetch(String yyyymmdd, String topOrgCd, String orgCd,
                                         int startPage, int display) {
         String xml = client.getProgramsXml(yyyymmdd, topOrgCd, orgCd, startPage, display);
@@ -188,12 +188,12 @@ public class EmpProgramCatalogService {
         }
     }
 
-    /** 없으면 insert(간단 upsert). 대량일 때는 배치 insert 고려 — (컨텍스트 없는 fallback) */
+
     private int upsert(List<EmpProgramItemDto> items) {
         return upsert(items, null, null);
     }
 
-    /** 없으면 insert(간단 upsert). (topOrgCd/orgCd 컨텍스트 포함 버전) */
+    /** 없으면 insert(간단 upsert) **/
     private int upsert(List<EmpProgramItemDto> items, String topOrgCd, String orgCd) {
         if (items == null || items.isEmpty()) return 0;
 

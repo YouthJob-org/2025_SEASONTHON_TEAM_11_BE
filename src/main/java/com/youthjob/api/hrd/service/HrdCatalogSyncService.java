@@ -159,7 +159,6 @@ public class HrdCatalogSyncService {
         return repo.deleteAllEndedBefore(today);
     }
 
-    /** 매주 토요일 00:00 KST: 종료 삭제 → 6개월 카탈로그 갱신 → area1 백필 → 상세/통계 저장 */
     @Scheduled(cron = "0 0 0 * * SUN", zone = "Asia/Seoul")
     @Transactional
     public void weeklyRefresh() {
