@@ -10,6 +10,9 @@ import com.youthjob.api.empprogram.dto.SaveEmpProgramRequest;
 import com.youthjob.api.empprogram.dto.SavedEmpProgramDto;
 import com.youthjob.api.empprogram.repository.EmpProgramCatalogRepository;
 import com.youthjob.api.empprogram.repository.SavedEmpProgramRepository;
+import com.youthjob.common.exception.ForbiddenException;
+import com.youthjob.common.exception.NotFoundException;
+import com.youthjob.common.response.ErrorStatus;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,9 +35,8 @@ import static java.util.stream.Collectors.toList;
 @RequiredArgsConstructor
 public class EmpProgramService {
 
-    private final EmpProgramApiClient client; // (다른 곳에서 쓰면 유지, 아니면 제거 가능)
-    private final SavedEmpProgramRepository savedRepo;   // 저장목록
-    private final EmpProgramCatalogRepository catalogRepo; // ✔ 카탈로그(DB 검색용)
+    private final SavedEmpProgramRepository savedRepo;
+    private final EmpProgramCatalogRepository catalogRepo;
 
     private static final XmlMapper XML = new XmlMapper();
 
@@ -50,7 +52,7 @@ public class EmpProgramService {
         int page = (startPage == null || startPage < 1) ? 1 : Math.min(startPage, 1000);
         int size = (display   == null || display   < 1) ? 10 : Math.min(display, 100);
 
-        // 동적 조건 (JPA Criteria Predicate 사용)
+
         Specification<EmpProgramCatalog> spec = (root, q, cb) -> {
             List<Predicate> preds = new ArrayList<>();
             preds.add(cb.equal(root.get("pgmStdt"), day));
@@ -139,10 +141,12 @@ public class EmpProgramService {
     @Transactional
     public void delete(Long memberId, Long id) {
         SavedEmpProgram e = savedRepo.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Not found"));
+                .orElseThrow(() -> new NotFoundException(ErrorStatus.NOT_FOUND_SAVED_JOB.getMessage()));
+
         if (!e.getMemberId().equals(memberId)) {
-            throw new SecurityException("NOT_OWNER");
+            throw new ForbiddenException(ErrorStatus.FORBIDDEN_ACCESS_DENIED.getMessage());
         }
+
         savedRepo.delete(e);
     }
 }

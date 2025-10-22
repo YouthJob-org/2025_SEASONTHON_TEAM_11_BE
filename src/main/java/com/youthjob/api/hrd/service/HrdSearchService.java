@@ -13,6 +13,9 @@ import com.youthjob.api.hrd.dto.*;
 import com.youthjob.api.hrd.repository.HrdCourseCatalogRepository;
 import com.youthjob.api.hrd.repository.HrdCourseFullRepository;
 import com.youthjob.api.hrd.repository.SavedCourseRepository;
+import com.youthjob.common.exception.NotFoundException;
+import com.youthjob.common.exception.UnauthorizedException;
+import com.youthjob.common.response.ErrorStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -143,7 +146,7 @@ public class HrdSearchService {
     public void deleteSaved(Long id) {
         User me = getCurrentUser();
         var target = savedCourseRepository.findByIdAndUser(id, me)
-                .orElseThrow(() -> new IllegalArgumentException("삭제할 항목을 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException(ErrorStatus.NOT_FOUND_SAVED_HRD_DELETE.getMessage()));
         savedCourseRepository.delete(target);
     }
 
@@ -339,10 +342,10 @@ public class HrdSearchService {
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || auth.getName() == null) {
-            throw new IllegalStateException("인증 정보가 없습니다.");
+            throw new UnauthorizedException(ErrorStatus.UNAUTHORIZED_USER.getMessage());
         }
         return userRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다: " + auth.getName()));
+                .orElseThrow(() -> new NotFoundException(ErrorStatus.NOT_FOUND_USER.getMessage()));
     }
 
     @Transactional

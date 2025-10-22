@@ -1,6 +1,7 @@
 // src/main/java/com/youthjob/api/naver/service/NaverSearchService.java
 package com.youthjob.api.naver.service;
 
+import com.youthjob.common.exception.InternalServerException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+
+import static com.youthjob.common.response.ErrorStatus.BAD_GATEWAY_NAVER_API;
 
 @Service
 @RequiredArgsConstructor
@@ -54,7 +57,7 @@ public class NaverSearchService {
                 con.disconnect();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Naver blog search request failed", e);
+            throw new InternalServerException(BAD_GATEWAY_NAVER_API);
         }
     }
 }

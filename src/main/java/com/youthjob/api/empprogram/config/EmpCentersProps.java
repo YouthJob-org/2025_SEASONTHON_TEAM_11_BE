@@ -11,7 +11,7 @@ import java.util.Map;
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "emp.centers")
-public class EmpCentersProps {
+public class EmpCentersProps { //application.yml에 저장된 노동청ID 불러오기
 
     private String topOrgCds;
     private Map<String, String> byTop = Collections.emptyMap();
