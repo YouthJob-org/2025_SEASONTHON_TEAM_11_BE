@@ -146,7 +146,7 @@ public class HrdSearchService {
     public void deleteSaved(Long id) {
         User me = getCurrentUser();
         var target = savedCourseRepository.findByIdAndUser(id, me)
-                .orElseThrow(() -> new NotFoundException(ErrorStatus.NOT_FOUND_SAVED_HRD_DELETE.getMessage()));
+                .orElseThrow(() -> new NotFoundException(ErrorStatus.NOT_FOUND_SAVED_HRD_DELETE));
         savedCourseRepository.delete(target);
     }
 
@@ -345,7 +345,7 @@ public class HrdSearchService {
             throw new UnauthorizedException(ErrorStatus.UNAUTHORIZED_USER.getMessage());
         }
         return userRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new NotFoundException(ErrorStatus.NOT_FOUND_USER.getMessage()));
+                .orElseThrow(() -> new NotFoundException(ErrorStatus.NOT_FOUND_USER));
     }
 
     @Transactional

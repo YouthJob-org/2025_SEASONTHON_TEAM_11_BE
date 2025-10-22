@@ -141,7 +141,7 @@ public class EmpProgramService {
     @Transactional
     public void delete(Long memberId, Long id) {
         SavedEmpProgram e = savedRepo.findById(id)
-                .orElseThrow(() -> new NotFoundException(ErrorStatus.NOT_FOUND_SAVED_JOB.getMessage()));
+                .orElseThrow(() -> new NotFoundException(ErrorStatus.NOT_FOUND_SAVED_JOB));
 
         if (!e.getMemberId().equals(memberId)) {
             throw new ForbiddenException(ErrorStatus.FORBIDDEN_ACCESS_DENIED.getMessage());
