@@ -9,11 +9,14 @@ import lombok.*;
         name = "saved_emp_program",
         uniqueConstraints = @UniqueConstraint(name = "uk_member_extkey", columnNames = {"member_id", "ext_key"})
 )
-@Getter @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor @Builder
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class SavedEmpProgram extends BaseTimeEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "member_id", nullable = false)

@@ -33,14 +33,14 @@ public class OpenAiClient {
         ChatMessage system = new ChatMessage("system", systemPrompt);
         ChatMessage user   = new ChatMessage("user",   userPrompt);
 
-        ChatCompletionRequest req = ChatCompletionRequest.builder()
+        ChatCompletionRequest req = ChatCompletionRequest.builder() //요청객체 생성
                 .model(model)
                 .messages(List.of(system, user))
                 .maxTokens(maxTokens)
                 .temperature(temperature)
                 .build();
 
-        return service.createChatCompletion(req)
+        return service.createChatCompletion(req) //OPENAI 서버로 요청 전송, 응답을 반환
                 .getChoices().get(0)
                 .getMessage().getContent();
     }

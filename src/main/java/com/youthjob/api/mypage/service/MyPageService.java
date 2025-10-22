@@ -10,6 +10,8 @@ import com.youthjob.api.hrd.repository.SavedCourseRepository;
 import com.youthjob.api.mypage.dto.*;
 import com.youthjob.api.youthpolicy.dto.SavedPolicyDto;
 import com.youthjob.api.youthpolicy.repository.SavedPolicyRepository;
+import com.youthjob.common.exception.UnauthorizedException;
+import com.youthjob.common.response.ErrorStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -104,7 +106,7 @@ public class MyPageService {
     private User currentUser() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || auth.getName() == null || "anonymousUser".equals(auth.getName())) {
-            throw new IllegalStateException("인증 필요");
+            throw new UnauthorizedException(ErrorStatus.UNAUTHORIZED_USER.getMessage());
         }
         return userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다: " + auth.getName()));

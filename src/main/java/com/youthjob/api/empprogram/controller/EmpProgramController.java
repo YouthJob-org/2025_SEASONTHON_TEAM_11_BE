@@ -42,8 +42,6 @@ public class EmpProgramController {
     @PostMapping(value = "/saved", consumes = "application/json", produces = "application/json")
     public ResponseEntity<SavedEmpProgramDto> save(
             @Valid @RequestBody SaveEmpProgramRequest req,
-            // 프로젝트의 Principal 구조에 맞게 수정 가능:
-            // e.g. @AuthenticationPrincipal CustomUser user -> Long memberId = user.getId();
             @AuthenticationPrincipal(expression = "id") Long memberId
     ) {
         return ResponseEntity.ok(service.save(memberId, req));

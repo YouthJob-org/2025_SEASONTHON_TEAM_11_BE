@@ -44,6 +44,8 @@ public enum ErrorStatus {
      */
     NOT_FOUND_JOB(HttpStatus.NOT_FOUND, "채용공고를 찾을 수 없습니다."),
     NOT_FOUND_SAVED_JOB(HttpStatus.NOT_FOUND, "저장 내역이 없습니다."),
+    NOT_FOUND_SAVED_HRD_DELETE(HttpStatus.NOT_FOUND,"삭제할 항목을 찾을 수 없습니다."),
+    NOT_FOUND_USER(HttpStatus.NOT_FOUND,"사용자를 찾을 수 없습니다."),
 
     /**
      * 409 CONFLICT
@@ -55,6 +57,10 @@ public enum ErrorStatus {
      */
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
 
+    /**
+     * 502 / 503 : 외부 API 연동 실패
+     */
+    BAD_GATEWAY_NAVER_API(HttpStatus.BAD_GATEWAY, "네이버 블로그 검색 API 통신 오류가 발생했습니다."),
 
     ;
 
