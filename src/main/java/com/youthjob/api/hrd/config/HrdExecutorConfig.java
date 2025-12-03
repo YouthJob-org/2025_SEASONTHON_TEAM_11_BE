@@ -10,9 +10,9 @@ public class HrdExecutorConfig {
     @Bean(name = "hrdExecutor")
     public ThreadPoolTaskExecutor hrdExecutor() {
         var ex = new ThreadPoolTaskExecutor();
-        ex.setCorePoolSize(8);
-        ex.setMaxPoolSize(16);
-        ex.setQueueCapacity(2000);
+        ex.setCorePoolSize(8); //기본 스레드 개수
+        ex.setMaxPoolSize(16); //최대 스레드 수
+        ex.setQueueCapacity(2000); //작업 큐
         ex.setThreadNamePrefix("hrd-");
         ex.initialize();
         return ex;
